@@ -18,6 +18,7 @@ data class HomeUiState(
     val screenshots: List<ScreenshotEntity> = emptyList(),
     val totalCount: Int = 0,
     val archivedCount: Int = 0,
+    val keptCount: Int = 0,
     val deletedCount: Int = 0,
     val pendingCount: Int = 0
 )
@@ -30,13 +31,15 @@ class HomeViewModel(
     val uiState: StateFlow<HomeUiState> = repository.allScreenshots
         .map { list ->
             val total = list.size
-            val archived = list.count { it.archived }
+            val archived = list.count { it.archived && !it.kept && !it.deleted }
+            val kept = list.count { it.kept && !it.deleted }
             val deleted = list.count { it.deleted }
-            val pending = list.count { !it.archived && !it.deleted }
+            val pending = list.count { !it.archived && !it.kept && !it.deleted }
             HomeUiState(
                 screenshots = list,
                 totalCount = total,
                 archivedCount = archived,
+                keptCount = kept,
                 deletedCount = deleted,
                 pendingCount = pending
             )
@@ -87,11 +90,10 @@ class HomeViewModel(
 
     fun runCleanupNow(context: Context) {
         viewModelScope.launch {
-            val retentionPeriodMs = java.util.concurrent.TimeUnit.DAYS.toMillis(7)
-            val threshold = System.currentTimeMillis() - retentionPeriodMs
-            val oldScreenshots = repository.getOldUnarchivedScreenshots(threshold)
-            if (oldScreenshots.isNotEmpty()) {
-                pendingUrisToDelete = oldScreenshots.map { it.uri }
+            // Cleanup targets only archived screenshots (not kept, not already deleted)
+            val archivedScreenshots = repository.getArchivedForCleanup()
+            if (archivedScreenshots.isNotEmpty()) {
+                pendingUrisToDelete = archivedScreenshots.map { it.uri }
                 val result = repository.deleteScreenshots(context, pendingUrisToDelete)
                 if (result is com.example.screenshotjanitor.data.repository.DeleteResult.RequiresPermission) {
                     _events.emit(HomeEvent.RequestDeletePermission(result.intentSender))

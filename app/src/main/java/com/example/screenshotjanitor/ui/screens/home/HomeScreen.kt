@@ -40,6 +40,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.AutoDelete
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.HourglassEmpty
@@ -291,11 +292,12 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            val pendingScreenshots = remember(uiState.screenshots) {
-                uiState.screenshots.filter { !it.archived && !it.deleted }
+            // Show all screenshots that haven't been physically deleted yet
+            val trackedScreenshots = remember(uiState.screenshots) {
+                uiState.screenshots.filter { !it.deleted }
             }
 
-            if (pendingScreenshots.isEmpty()) {
+            if (trackedScreenshots.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -313,7 +315,7 @@ fun HomeScreen(
                             modifier = Modifier.size(64.dp)
                         )
                         Text(
-                            text = "No pending screenshots to clean.",
+                            text = "No screenshots being tracked.",
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.outline
@@ -327,7 +329,7 @@ fun HomeScreen(
                     contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
                     items(
-                        items = pendingScreenshots,
+                        items = trackedScreenshots,
                         key = { it.uri }
                     ) { screenshot ->
                         Box(modifier = Modifier.animateItem()) {
@@ -418,11 +420,11 @@ fun StatsGrid(uiState: HomeUiState) {
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             StatsCard(
-                title = "Monitored",
-                value = uiState.totalCount.toString(),
-                icon = Icons.Default.Search,
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                title = "Pending",
+                value = uiState.pendingCount.toString(),
+                icon = Icons.Default.HourglassEmpty,
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 modifier = Modifier.weight(1f)
             )
             StatsCard(
@@ -439,11 +441,11 @@ fun StatsGrid(uiState: HomeUiState) {
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             StatsCard(
-                title = "Pending",
-                value = uiState.pendingCount.toString(),
-                icon = Icons.Default.HourglassEmpty,
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                title = "Kept",
+                value = uiState.keptCount.toString(),
+                icon = Icons.Default.Bookmark,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.weight(1f)
             )
             StatsCard(
@@ -570,7 +572,11 @@ fun ScreenshotRow(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = when {
+                screenshot.kept -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                screenshot.archived -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+                else -> MaterialTheme.colorScheme.surfaceContainer
+            }
         ),
         shape = RoundedCornerShape(20.dp)
     ) {
@@ -599,7 +605,7 @@ fun ScreenshotRow(
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1
                     )
-                    
+
                     val dateFormatted = remember(screenshot.createdAt) {
                         val sdf = SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault())
                         sdf.format(Date(screenshot.createdAt))
@@ -610,17 +616,18 @@ fun ScreenshotRow(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
+                    // Badge row — can show multiple badges
                     Row(
                         modifier = Modifier.padding(top = 2.dp),
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        if (screenshot.archived) {
-                            AssistChip(
+                        when {
+                            screenshot.kept -> AssistChip(
                                 onClick = {},
-                                label = { Text("Archived") },
+                                label = { Text("Kept") },
                                 leadingIcon = {
                                     Icon(
-                                        imageVector = Icons.Default.CheckCircle,
+                                        imageVector = Icons.Default.Bookmark,
                                         contentDescription = null,
                                         modifier = Modifier.size(14.dp)
                                     )
@@ -633,27 +640,25 @@ fun ScreenshotRow(
                                 border = null,
                                 shape = RoundedCornerShape(100.dp)
                             )
-                        } else if (screenshot.deleted) {
-                            AssistChip(
+                            screenshot.archived -> AssistChip(
                                 onClick = {},
-                                label = { Text("Deleted") },
+                                label = { Text("Archived · Will be cleaned") },
                                 leadingIcon = {
                                     Icon(
-                                        imageVector = Icons.Default.Block,
+                                        imageVector = Icons.Default.Archive,
                                         contentDescription = null,
                                         modifier = Modifier.size(14.dp)
                                     )
                                 },
                                 colors = AssistChipDefaults.assistChipColors(
-                                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                                    labelColor = MaterialTheme.colorScheme.onErrorContainer,
-                                    leadingIconContentColor = MaterialTheme.colorScheme.onErrorContainer
+                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                    labelColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    leadingIconContentColor = MaterialTheme.colorScheme.onTertiaryContainer
                                 ),
                                 border = null,
                                 shape = RoundedCornerShape(100.dp)
                             )
-                        } else {
-                            AssistChip(
+                            else -> AssistChip(
                                 onClick = {},
                                 label = { Text("Pending") },
                                 leadingIcon = {
@@ -676,15 +681,19 @@ fun ScreenshotRow(
                 }
             }
 
-            if (!screenshot.deleted) {
+            // Action buttons — kept items have no actions (they are safe);
+            // archived items can only be manually deleted or un-archived via Keep;
+            // pending items get all three actions.
+            if (!screenshot.kept) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (!screenshot.archived) {
+                        // Pending: show Archive + Keep + Delete
                         TextButton(
                             onClick = onArchive,
                             colors = ButtonDefaults.textButtonColors(
@@ -695,24 +704,43 @@ fun ScreenshotRow(
                             Spacer(Modifier.width(6.dp))
                             Text("Archive")
                         }
-                    }
-                    
-                    FilledTonalButton(
-                        onClick = onKeep,
-                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                    ) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("Keep")
-                    }
-                    
-                    TextButton(
-                        onClick = onDelete,
-                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                    ) {
-                        Icon(Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("Delete")
+
+                        FilledTonalButton(
+                            onClick = onKeep,
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                        ) {
+                            Icon(Icons.Default.Bookmark, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Keep")
+                        }
+
+                        TextButton(
+                            onClick = onDelete,
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Icon(Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Delete")
+                        }
+                    } else {
+                        // Archived: show Keep (rescue from janitor) + Delete now
+                        FilledTonalButton(
+                            onClick = onKeep,
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                        ) {
+                            Icon(Icons.Default.Bookmark, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Keep")
+                        }
+
+                        TextButton(
+                            onClick = onDelete,
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Icon(Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Delete Now")
+                        }
                     }
                 }
             }

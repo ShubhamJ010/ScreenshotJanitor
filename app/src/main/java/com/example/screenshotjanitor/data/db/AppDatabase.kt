@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.example.screenshotjanitor.data.db.dao.ScreenshotDao
 import com.example.screenshotjanitor.data.db.entity.ScreenshotEntity
 
-@Database(entities = [ScreenshotEntity::class], version = 1, exportSchema = false)
+@Database(entities = [ScreenshotEntity::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun screenshotDao(): ScreenshotDao
 
@@ -21,9 +21,17 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "screenshot_janitor_database"
-                ).build()
+                )
+                    .addMigrations(MIGRATION_1_2)
+                    .build()
                 INSTANCE = instance
                 instance
+            }
+        }
+
+        private val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE screenshots ADD COLUMN kept INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

@@ -56,10 +56,19 @@ class ScreenshotRepository(private val screenshotDao: ScreenshotDao) {
     }
 
     suspend fun keepScreenshot(uri: String) = withContext(Dispatchers.IO) {
-        Log.d(TAG, "Keeping screenshot: $uri")
+        Log.d(TAG, "Keeping screenshot (marking as kept): $uri")
         val entity = screenshotDao.getScreenshotByUri(uri)
         if (entity != null) {
-            screenshotDao.deleteScreenshot(entity)
+            screenshotDao.updateScreenshot(entity.copy(kept = true, archived = false))
+        } else {
+            screenshotDao.insertScreenshot(
+                ScreenshotEntity(
+                    uri = uri,
+                    fileName = Uri.parse(uri).lastPathSegment ?: "Unknown",
+                    createdAt = System.currentTimeMillis(),
+                    kept = true
+                )
+            )
         }
     }
 
@@ -102,7 +111,9 @@ class ScreenshotRepository(private val screenshotDao: ScreenshotDao) {
     }
 
 
-    suspend fun getOldUnarchivedScreenshots(threshold: Long): List<ScreenshotEntity> = withContext(Dispatchers.IO) {
-        screenshotDao.getOldUnarchivedScreenshots(threshold)
+    /** Returns all archived screenshots that are not kept and not yet deleted — targets for janitor. */
+    suspend fun getArchivedForCleanup(): List<ScreenshotEntity> = withContext(Dispatchers.IO) {
+        screenshotDao.getArchivedForCleanup()
     }
 }
+

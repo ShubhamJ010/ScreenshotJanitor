@@ -26,6 +26,11 @@ interface ScreenshotDao {
     @Delete
     suspend fun deleteScreenshot(screenshot: ScreenshotEntity)
 
-    @Query("SELECT * FROM screenshots WHERE archived = 0 AND deleted = 0 AND createdAt < :threshold")
-    suspend fun getOldUnarchivedScreenshots(threshold: Long): List<ScreenshotEntity>
+    // Used by the janitor: only archived screenshots that haven't been kept or already deleted
+    @Query("SELECT * FROM screenshots WHERE archived = 1 AND kept = 0 AND deleted = 0")
+    suspend fun getArchivedForCleanup(): List<ScreenshotEntity>
+
+    // Legacy fallback — old unarchived screenshots beyond a time threshold (not kept, not deleted)
+    @Query("SELECT * FROM screenshots WHERE archived = 0 AND kept = 0 AND deleted = 0 AND createdAt < :threshold")
+    suspend fun getOldPendingScreenshots(threshold: Long): List<ScreenshotEntity>
 }

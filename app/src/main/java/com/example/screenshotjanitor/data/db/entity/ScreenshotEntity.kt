@@ -10,5 +10,6 @@ data class ScreenshotEntity(
     val fileName: String,
     val createdAt: Long,
     val archived: Boolean = false,
-    val deleted: Boolean = false
+    val deleted: Boolean = false,
+    val kept: Boolean = false
 )
