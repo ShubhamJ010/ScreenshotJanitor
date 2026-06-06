@@ -71,12 +71,13 @@ class ScreenshotNotificationManager(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Delete action
-        val deleteIntent = Intent(context, NotificationActionReceiver::class.java).apply {
+        // Delete action - starts MainActivity
+        val deleteIntent = Intent(context, MainActivity::class.java).apply {
             action = AppConstants.ACTION_DELETE
             putExtra(AppConstants.EXTRA_SCREENSHOT_URI, uriString)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
-        val deletePendingIntent = PendingIntent.getBroadcast(
+        val deletePendingIntent = PendingIntent.getActivity(
             context,
             3,
             deleteIntent,
@@ -101,7 +102,40 @@ class ScreenshotNotificationManager(private val context: Context) {
         }
     }
 
+    fun showCleanupNotification(count: Int) {
+        Log.d(TAG, "Showing cleanup notification for $count screenshots")
+        
+        val intent = Intent(context, MainActivity::class.java).apply {
+            action = AppConstants.ACTION_CLEANUP_OLD
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            4,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val builder = NotificationCompat.Builder(context, AppConstants.NOTIFICATION_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_menu_delete)
+            .setContentTitle("Cleanup Recommended")
+            .setContentText("Found $count old screenshots. Tap to delete them and free up space.")
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+
+        try {
+            notificationManager.notify(AppConstants.NOTIFICATION_CLEANUP_ID, builder.build())
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Missing POST_NOTIFICATIONS permission", e)
+        }
+    }
+
     fun dismissNotification() {
         notificationManager.cancel(AppConstants.NOTIFICATION_ID)
+    }
+
+    fun dismissCleanupNotification() {
+        notificationManager.cancel(AppConstants.NOTIFICATION_CLEANUP_ID)
     }
 }

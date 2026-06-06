@@ -9,6 +9,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 
+import android.content.IntentSender
+import android.provider.MediaStore
+
+sealed class DeleteResult {
+    object Success : DeleteResult()
+    class RequiresPermission(val intentSender: IntentSender) : DeleteResult()
+    class Failed(val error: Throwable) : DeleteResult()
+}
+
 class ScreenshotRepository(private val screenshotDao: ScreenshotDao) {
 
     private val TAG = "ScreenshotRepository"
@@ -50,48 +59,48 @@ class ScreenshotRepository(private val screenshotDao: ScreenshotDao) {
         Log.d(TAG, "Keeping screenshot: $uri")
         val entity = screenshotDao.getScreenshotByUri(uri)
         if (entity != null) {
-            screenshotDao.updateScreenshot(entity.copy(archived = false, deleted = false))
-        } else {
-            screenshotDao.insertScreenshot(
-                ScreenshotEntity(
-                    uri = uri,
-                    fileName = Uri.parse(uri).lastPathSegment ?: "Unknown",
-                    createdAt = System.currentTimeMillis(),
-                    archived = false,
-                    deleted = false
-                )
-            )
+            screenshotDao.deleteScreenshot(entity)
         }
     }
 
-    suspend fun deleteScreenshot(context: Context, uriString: String): Boolean = withContext(Dispatchers.IO) {
-        Log.d(TAG, "Deleting screenshot: $uriString")
-        var fileDeleted = false
+    suspend fun deleteScreenshot(context: Context, uriString: String): DeleteResult = withContext(Dispatchers.IO) {
+        deleteScreenshots(context, listOf(uriString))
+    }
+
+    suspend fun deleteScreenshots(context: Context, uriStrings: List<String>): DeleteResult = withContext(Dispatchers.IO) {
+        Log.d(TAG, "Deleting screenshots: $uriStrings")
+        if (uriStrings.isEmpty()) return@withContext DeleteResult.Success
+
         try {
-            val uri = Uri.parse(uriString)
-            val rowsDeleted = context.contentResolver.delete(uri, null, null)
-            fileDeleted = rowsDeleted > 0
-            Log.d(TAG, "Delete from MediaStore result: rowsDeleted = $rowsDeleted")
+            val uris = uriStrings.map { Uri.parse(it) }
+            val pendingIntent = MediaStore.createDeleteRequest(context.contentResolver, uris)
+            DeleteResult.RequiresPermission(pendingIntent.intentSender)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to delete file from MediaStore: $uriString", e)
+            Log.e(TAG, "Failed to create delete request for screenshots: $uriStrings", e)
+            DeleteResult.Failed(e)
         }
-
-        val entity = screenshotDao.getScreenshotByUri(uriString)
-        if (entity != null) {
-            screenshotDao.updateScreenshot(entity.copy(deleted = true))
-        } else {
-            screenshotDao.insertScreenshot(
-                ScreenshotEntity(
-                    uri = uriString,
-                    fileName = Uri.parse(uriString).lastPathSegment ?: "Unknown",
-                    createdAt = System.currentTimeMillis(),
-                    archived = false,
-                    deleted = true
-                )
-            )
-        }
-        fileDeleted
     }
+
+    suspend fun markAsDeleted(uriStrings: List<String>) = withContext(Dispatchers.IO) {
+        for (uriString in uriStrings) {
+            Log.d(TAG, "Marking screenshot as deleted in DB: $uriString")
+            val entity = screenshotDao.getScreenshotByUri(uriString)
+            if (entity != null) {
+                screenshotDao.updateScreenshot(entity.copy(deleted = true))
+            } else {
+                screenshotDao.insertScreenshot(
+                    ScreenshotEntity(
+                        uri = uriString,
+                        fileName = Uri.parse(uriString).lastPathSegment ?: "Unknown",
+                        createdAt = System.currentTimeMillis(),
+                        archived = false,
+                        deleted = true
+                    )
+                )
+            }
+        }
+    }
+
 
     suspend fun getOldUnarchivedScreenshots(threshold: Long): List<ScreenshotEntity> = withContext(Dispatchers.IO) {
         screenshotDao.getOldUnarchivedScreenshots(threshold)

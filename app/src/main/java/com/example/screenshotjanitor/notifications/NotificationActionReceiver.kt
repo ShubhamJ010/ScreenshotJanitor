@@ -40,10 +40,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
                     repository.keepScreenshot(uriString)
                     notificationManager.dismissNotification()
                 }
-                AppConstants.ACTION_DELETE -> {
-                    repository.deleteScreenshot(context, uriString)
-                    notificationManager.dismissNotification()
-                }
+
                 else -> {
                     Log.w(TAG, "Unknown action: $action")
                 }

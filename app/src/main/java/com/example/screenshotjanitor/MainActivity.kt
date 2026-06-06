@@ -1,5 +1,6 @@
 package com.example.screenshotjanitor
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import com.example.screenshotjanitor.core.constants.AppConstants
+import com.example.screenshotjanitor.notifications.ScreenshotNotificationManager
 import com.example.screenshotjanitor.ui.screens.home.HomeScreen
 import com.example.screenshotjanitor.ui.theme.ScreenshotJanitorTheme
 import com.example.screenshotjanitor.viewmodel.HomeViewModel
@@ -27,6 +30,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        handleIntent(intent)
         setContent {
             ScreenshotJanitorTheme {
                 Surface(
@@ -35,6 +39,30 @@ class MainActivity : ComponentActivity() {
                 ) {
                     HomeScreen(viewModel = viewModel)
                 }
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        if (intent == null) return
+        when (intent.action) {
+            AppConstants.ACTION_DELETE -> {
+                val uri = intent.getStringExtra(AppConstants.EXTRA_SCREENSHOT_URI)
+                if (uri != null) {
+                    viewModel.deleteScreenshot(this, uri)
+                    val notificationManager = ScreenshotNotificationManager(this)
+                    notificationManager.dismissNotification()
+                }
+            }
+            AppConstants.ACTION_CLEANUP_OLD -> {
+                viewModel.runCleanupNow(this)
+                val notificationManager = ScreenshotNotificationManager(this)
+                notificationManager.dismissCleanupNotification()
             }
         }
     }

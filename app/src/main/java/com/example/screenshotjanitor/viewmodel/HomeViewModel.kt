@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 data class HomeUiState(
@@ -69,11 +70,50 @@ class HomeViewModel(
         }
     }
 
+    private val _events = kotlinx.coroutines.flow.MutableSharedFlow<HomeEvent>()
+    val events: kotlinx.coroutines.flow.SharedFlow<HomeEvent> = _events.asSharedFlow()
+
+    private var pendingUrisToDelete: List<String> = emptyList()
+
     fun deleteScreenshot(context: Context, uri: String) {
         viewModelScope.launch {
-            repository.deleteScreenshot(context, uri)
+            pendingUrisToDelete = listOf(uri)
+            val result = repository.deleteScreenshots(context, pendingUrisToDelete)
+            if (result is com.example.screenshotjanitor.data.repository.DeleteResult.RequiresPermission) {
+                _events.emit(HomeEvent.RequestDeletePermission(result.intentSender))
+            }
         }
     }
+
+    fun runCleanupNow(context: Context) {
+        viewModelScope.launch {
+            val retentionPeriodMs = java.util.concurrent.TimeUnit.DAYS.toMillis(7)
+            val threshold = System.currentTimeMillis() - retentionPeriodMs
+            val oldScreenshots = repository.getOldUnarchivedScreenshots(threshold)
+            if (oldScreenshots.isNotEmpty()) {
+                pendingUrisToDelete = oldScreenshots.map { it.uri }
+                val result = repository.deleteScreenshots(context, pendingUrisToDelete)
+                if (result is com.example.screenshotjanitor.data.repository.DeleteResult.RequiresPermission) {
+                    _events.emit(HomeEvent.RequestDeletePermission(result.intentSender))
+                }
+            }
+        }
+    }
+
+    fun onDeletePermissionGranted() {
+        viewModelScope.launch {
+            repository.markAsDeleted(pendingUrisToDelete)
+            pendingUrisToDelete = emptyList()
+        }
+    }
+
+    fun onDeletePermissionDenied() {
+        pendingUrisToDelete = emptyList()
+    }
+}
+
+sealed class HomeEvent {
+    class RequestDeletePermission(val intentSender: android.content.IntentSender) : HomeEvent()
 }
 
 class HomeViewModelFactory(

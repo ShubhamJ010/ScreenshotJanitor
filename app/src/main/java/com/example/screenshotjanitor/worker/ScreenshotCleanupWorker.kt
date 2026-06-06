@@ -28,15 +28,10 @@ class ScreenshotCleanupWorker(
             val oldScreenshots = repository.getOldUnarchivedScreenshots(threshold)
             Log.d(TAG, "Found ${oldScreenshots.size} old unarchived screenshots to clean up")
 
-            var deleteCount = 0
-            for (screenshot in oldScreenshots) {
-                Log.d(TAG, "Cleaning up old screenshot: ${screenshot.uri}")
-                val deleted = repository.deleteScreenshot(applicationContext, screenshot.uri)
-                if (deleted) {
-                    deleteCount++
-                }
+            if (oldScreenshots.isNotEmpty()) {
+                val notificationManager = com.example.screenshotjanitor.notifications.ScreenshotNotificationManager(applicationContext)
+                notificationManager.showCleanupNotification(oldScreenshots.size)
             }
-            Log.d(TAG, "Successfully cleaned up $deleteCount screenshots")
             return Result.success()
         } catch (e: Exception) {
             Log.e(TAG, "Error executing screenshot cleanup worker", e)
