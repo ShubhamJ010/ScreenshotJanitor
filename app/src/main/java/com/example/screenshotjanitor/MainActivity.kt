@@ -23,19 +23,29 @@ class MainActivity : ComponentActivity() {
         val app = application as ScreenshotJanitorApp
         HomeViewModelFactory(
             app.repository,
-            androidx.work.WorkManager.getInstance(app)
+            androidx.work.WorkManager.getInstance(app),
         )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Optimize for high refresh rate (120Hz)
+        val modes = display?.supportedModes
+        val maxRefreshRateMode = modes?.maxByOrNull { it.refreshRate }
+        if (maxRefreshRateMode != null && (maxRefreshRateMode.refreshRate > 60f)) {
+            val layoutParams = window.attributes
+            layoutParams.preferredDisplayModeId = maxRefreshRateMode.modeId
+            window.attributes = layoutParams
+        }
+
         enableEdgeToEdge()
         handleIntent(intent)
         setContent {
             ScreenshotJanitorTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.background,
                 ) {
                     HomeScreen(viewModel = viewModel)
                 }

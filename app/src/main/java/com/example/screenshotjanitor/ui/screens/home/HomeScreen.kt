@@ -325,6 +325,15 @@ private fun HomeContent(
         uiState.screenshots.filter { !it.deleted }
     }
 
+    val filterCounts = remember(trackedScreenshots) {
+        mapOf(
+            ScreenshotFilter.ALL to trackedScreenshots.size,
+            ScreenshotFilter.PENDING to trackedScreenshots.count { !it.archived && !it.kept },
+            ScreenshotFilter.ARCHIVED to trackedScreenshots.count { it.archived && !it.kept },
+            ScreenshotFilter.KEPT to trackedScreenshots.count { it.kept }
+        )
+    }
+
     val filteredScreenshots = remember(trackedScreenshots, selectedFilter) {
         when (selectedFilter) {
             ScreenshotFilter.ALL -> trackedScreenshots
@@ -333,6 +342,8 @@ private fun HomeContent(
             ScreenshotFilter.KEPT -> trackedScreenshots.filter { it.kept }
         }
     }
+
+    val dateFormatter = remember { SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault()) }
 
     LazyColumn(
         state = listState,
@@ -379,16 +390,7 @@ private fun HomeContent(
 
         // ── Stats grid ────────────────────────────────────────────────────────
         item(key = "stats_grid") {
-            StatsGrid(
-                uiState = uiState,
-                modifier = Modifier.animateItem(
-                    placementSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMediumLow,
-                        visibilityThreshold = IntOffset.VisibilityThreshold
-                    )
-                )
-            )
+            StatsGrid(uiState = uiState)
         }
 
         // ── Next cleanup banner ───────────────────────────────────────────────
@@ -397,14 +399,7 @@ private fun HomeContent(
                 NextCleanupBanner(
                     timeMillis = nextCleanupTime,
                     onRunNow = onRunCleanup,
-                    onReschedule = onReschedule,
-                    modifier = Modifier.animateItem(
-                        placementSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                            visibilityThreshold = IntOffset.VisibilityThreshold
-                        )
-                    )
+                    onReschedule = onReschedule
                 )
             }
         }
@@ -412,14 +407,7 @@ private fun HomeContent(
         // ── Section header + filter chips ─────────────────────────────────────
         item(key = "section_header") {
             Column(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.animateItem(
-                    placementSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMediumLow,
-                        visibilityThreshold = IntOffset.VisibilityThreshold
-                    )
-                )
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -463,12 +451,7 @@ private fun HomeContent(
                     contentPadding = PaddingValues(horizontal = 0.dp)
                 ) {
                     items(ScreenshotFilter.entries, key = { it.name }) { filter ->
-                        val count = when (filter) {
-                            ScreenshotFilter.ALL -> trackedScreenshots.size
-                            ScreenshotFilter.PENDING -> trackedScreenshots.count { !it.archived && !it.kept }
-                            ScreenshotFilter.ARCHIVED -> trackedScreenshots.count { it.archived && !it.kept }
-                            ScreenshotFilter.KEPT -> trackedScreenshots.count { it.kept }
-                        }
+                        val count = filterCounts[filter] ?: 0
                         FilterChip(
                             selected = selectedFilter == filter,
                             onClick = { onFilterSelected(filter) },
@@ -505,34 +488,20 @@ private fun HomeContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 48.dp)
-                        .animateItem(
-                            placementSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMediumLow,
-                                visibilityThreshold = IntOffset.VisibilityThreshold
-                            )
-                        )
                 )
             }
         } else {
             items(
                 items = filteredScreenshots,
-                key = { it.uri }
+                key = { it.uri },
+                contentType = { "screenshot_card" }
             ) { screenshot ->
                 ScreenshotCard(
                     screenshot = screenshot,
+                    dateFormatter = dateFormatter,
                     onArchive = { onArchive(screenshot.uri) },
                     onKeep = { onKeep(screenshot.uri) },
-                    onDelete = { onDelete(screenshot.uri) },
-                    modifier = Modifier.animateItem(
-                        placementSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                            visibilityThreshold = IntOffset.VisibilityThreshold
-                        ),
-                        fadeInSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                        fadeOutSpec = spring(stiffness = Spring.StiffnessMedium)
-                    )
+                    onDelete = { onDelete(screenshot.uri) }
                 )
             }
         }
@@ -576,12 +545,14 @@ fun PermissionWarningCard(
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )
             }
-            val message = buildString {
-                append("The app needs permissions to function properly:\n")
-                if (!hasStoragePermission) append("• Read Media Images (to detect screenshots)\n")
-                if (!hasNotificationPermission) append("• Post Notifications (to show quick action options)\n")
-                if (!isAllFilesManager && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    append("• All Files Access (needed for AUTOMATIC background cleanup of system screenshots)\n")
+            val message = remember(hasStoragePermission, hasNotificationPermission, isAllFilesManager) {
+                buildString {
+                    append("The app needs permissions to function properly:\n")
+                    if (!hasStoragePermission) append("• Read Media Images (to detect screenshots)\n")
+                    if (!hasNotificationPermission) append("• Post Notifications (to show quick action options)\n")
+                    if (!isAllFilesManager && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        append("• All Files Access (needed for AUTOMATIC background cleanup of system screenshots)\n")
+                    }
                 }
             }
             Text(
@@ -679,12 +650,12 @@ fun StatsCard(
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = containerColor),
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
-                .padding(18.dp)
+                .padding(16.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -693,56 +664,21 @@ fun StatsCard(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = contentColor.copy(alpha = 0.75f)
+                    color = contentColor.copy(alpha = 0.7f)
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                AnimatedContent(
-                    targetState = value,
-                    transitionSpec = {
-                        val isIncrease = (targetState.toIntOrNull() ?: 0) > (initialState.toIntOrNull() ?: 0)
-                        if (isIncrease) {
-                            (slideInVertically(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMedium
-                                )
-                            ) { it } + fadeIn()) togetherWith
-                                    (slideOutVertically { -it } + fadeOut())
-                        } else {
-                            (slideInVertically(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMedium
-                                )
-                            ) { -it } + fadeIn()) togetherWith
-                                    (slideOutVertically { it } + fadeOut())
-                        }.using(SizeTransform(clip = false))
-                    },
-                    label = "counterTransition"
-                ) { targetValue ->
-                    Text(
-                        text = targetValue,
-                        style = MaterialTheme.typography.displaySmall,
-                        fontWeight = FontWeight.Black,
-                        color = contentColor
-                    )
-                }
-            }
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(contentColor.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = contentColor,
-                    modifier = Modifier.size(24.dp)
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Black,
+                    color = contentColor
                 )
             }
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = contentColor.copy(alpha = 0.2f),
+                modifier = Modifier.size(32.dp)
+            )
         }
     }
 }
@@ -936,12 +872,21 @@ fun EmptyStateView(filter: ScreenshotFilter, modifier: Modifier = Modifier) {
 @Composable
 fun ScreenshotThumbnail(uriString: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val bitmapState = produceState<Bitmap?>(initialValue = null, key1 = uriString) {
-        value = withContext(Dispatchers.IO) {
+    var bitmap by remember(uriString) { mutableStateOf<Bitmap?>(null) }
+
+    LaunchedEffect(uriString) {
+        // Small delay to prevent loading while scrolling fast
+        kotlinx.coroutines.delay(100)
+        withContext(Dispatchers.IO) {
             try {
-                context.contentResolver.loadThumbnail(Uri.parse(uriString), Size(200, 200), null)
+                val thumb = context.contentResolver.loadThumbnail(
+                    Uri.parse(uriString),
+                    Size(150, 150),
+                    null
+                )
+                bitmap = thumb
             } catch (e: Exception) {
-                null
+                // Fail silently
             }
         }
     }
@@ -953,10 +898,9 @@ fun ScreenshotThumbnail(uriString: String, modifier: Modifier = Modifier) {
             .background(MaterialTheme.colorScheme.surfaceContainerHighest),
         contentAlignment = Alignment.Center
     ) {
-        val bitmap = bitmapState.value
         if (bitmap != null) {
             Image(
-                bitmap = bitmap.asImageBitmap(),
+                bitmap = bitmap!!.asImageBitmap(),
                 contentDescription = "Screenshot thumbnail",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
@@ -977,6 +921,7 @@ fun ScreenshotThumbnail(uriString: String, modifier: Modifier = Modifier) {
 @Composable
 fun ScreenshotCard(
     screenshot: ScreenshotEntity,
+    dateFormatter: SimpleDateFormat,
     onArchive: () -> Unit,
     onKeep: () -> Unit,
     onDelete: () -> Unit,
@@ -1015,12 +960,11 @@ fun ScreenshotCard(
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 2
+                        maxLines = 1
                     )
 
                     val dateFormatted = remember(screenshot.createdAt) {
-                        SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault())
-                            .format(Date(screenshot.createdAt))
+                        dateFormatter.format(Date(screenshot.createdAt))
                     }
                     Text(
                         text = dateFormatted,
@@ -1028,71 +972,26 @@ fun ScreenshotCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    Spacer(Modifier.height(4.dp))
-
-                    // Animated status badge
-                    AnimatedContent(
-                        targetState = when {
-                            screenshot.kept -> ScreenshotFilter.KEPT
-                            screenshot.archived -> ScreenshotFilter.ARCHIVED
-                            else -> ScreenshotFilter.PENDING
-                        },
-                        transitionSpec = {
-                            (slideInVertically(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMedium
-                                )
-                            ) { -it } + fadeIn()) togetherWith (slideOutVertically { it } + fadeOut()) using
-                                    SizeTransform(clip = false)
-                        },
-                        label = "statusBadge"
-                    ) { status ->
-                        val (badgeColor, onBadgeColor, badgeIcon, badgeLabel) = when (status) {
-                            ScreenshotFilter.KEPT -> StatusBadgeData(
-                                MaterialTheme.colorScheme.primaryContainer,
-                                MaterialTheme.colorScheme.onPrimaryContainer,
-                                Icons.Default.Bookmark,
-                                "Kept"
-                            )
-                            ScreenshotFilter.ARCHIVED -> StatusBadgeData(
-                                MaterialTheme.colorScheme.tertiaryContainer,
-                                MaterialTheme.colorScheme.onTertiaryContainer,
-                                Icons.Default.Archive,
-                                "Archived"
-                            )
-                            else -> StatusBadgeData(
-                                MaterialTheme.colorScheme.secondaryContainer,
-                                MaterialTheme.colorScheme.onSecondaryContainer,
-                                Icons.Default.HourglassEmpty,
-                                "Pending"
-                            )
-                        }
-                        AssistChip(
-                            onClick = {},
-                            label = {
-                                Text(
-                                    text = badgeLabel,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = badgeIcon,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                            },
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = badgeColor,
-                                labelColor = onBadgeColor,
-                                leadingIconContentColor = onBadgeColor
-                            ),
-                            border = null,
-                            shape = RoundedCornerShape(100.dp)
-                        )
+                    // Status badge
+                    val status = when {
+                        screenshot.kept -> ScreenshotFilter.KEPT
+                        screenshot.archived -> ScreenshotFilter.ARCHIVED
+                        else -> ScreenshotFilter.PENDING
                     }
+                    val badgeData = when (status) {
+                        ScreenshotFilter.KEPT -> Triple(MaterialTheme.colorScheme.primaryContainer, Icons.Default.Bookmark, "Kept")
+                        ScreenshotFilter.ARCHIVED -> Triple(MaterialTheme.colorScheme.tertiaryContainer, Icons.Default.Archive, "Archived")
+                        else -> Triple(MaterialTheme.colorScheme.secondaryContainer, Icons.Default.HourglassEmpty, "Pending")
+                    }
+                    
+                    AssistChip(
+                        onClick = {},
+                        label = { Text(badgeData.third, style = MaterialTheme.typography.labelSmall) },
+                        leadingIcon = { Icon(badgeData.second, null, modifier = Modifier.size(12.dp)) },
+                        colors = AssistChipDefaults.assistChipColors(containerColor = badgeData.first),
+                        border = null,
+                        shape = RoundedCornerShape(8.dp)
+                    )
                 }
             }
 
@@ -1117,25 +1016,10 @@ fun ScreenshotCard(
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                             shape = RoundedCornerShape(100.dp)
                         ) {
-                            val infiniteTransition = rememberInfiniteTransition(label = "archiveIcon")
-                            val scale by infiniteTransition.animateFloat(
-                                initialValue = 1f,
-                                targetValue = 1.15f,
-                                animationSpec = infiniteRepeatable(
-                                    animation = tween(1200, easing = FastOutSlowInEasing),
-                                    repeatMode = RepeatMode.Reverse
-                                ),
-                                label = "scale"
-                            )
                             Icon(
                                 Icons.Default.Archive,
                                 contentDescription = null,
-                                modifier = Modifier
-                                    .size(18.dp)
-                                    .graphicsLayer {
-                                        scaleX = scale
-                                        scaleY = scale
-                                    }
+                                modifier = Modifier.size(18.dp)
                             )
                             Spacer(Modifier.width(6.dp))
                             Text("Archive", fontWeight = FontWeight.SemiBold)
@@ -1205,11 +1089,4 @@ fun ScreenshotCard(
     }
 }
 
-// ─── Helper data class for status badge ───────────────────────────────────────
-
-private data class StatusBadgeData(
-    val containerColor: androidx.compose.ui.graphics.Color,
-    val contentColor: androidx.compose.ui.graphics.Color,
-    val icon: ImageVector,
-    val label: String
-)
+// ─── Helper data class (unused) ───────────────────────────────────────

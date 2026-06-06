@@ -39,14 +39,21 @@ class HomeViewModel(
 
     val uiState: StateFlow<HomeUiState> = repository.allScreenshots
         .map { list ->
-            val total = list.size
-            val archived = list.count { it.archived && !it.kept && !it.deleted }
-            val kept = list.count { it.kept && !it.deleted }
-            val deleted = list.count { it.deleted }
-            val pending = list.count { !it.archived && !it.kept && !it.deleted }
+            var archived = 0
+            var kept = 0
+            var deleted = 0
+            var pending = 0
+            list.forEach {
+                when {
+                    it.deleted -> deleted++
+                    it.kept -> kept++
+                    it.archived -> archived++
+                    else -> pending++
+                }
+            }
             HomeUiState(
                 screenshots = list,
-                totalCount = total,
+                totalCount = list.size,
                 archivedCount = archived,
                 keptCount = kept,
                 deletedCount = deleted,
