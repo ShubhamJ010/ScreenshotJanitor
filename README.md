@@ -278,55 +278,55 @@ These are intentionally out of scope for the MVP.
 # Implementation TODO
 
 ## Phase 1 — Project Setup
-- [ ] Create Android project
-- [ ] Configure Material 3
-- [ ] Configure edge-to-edge UI
-- [ ] Add Room dependencies
-- [ ] Add WorkManager dependencies
-- [ ] Configure notification channels
+- [x] Create Android project
+- [x] Configure Material 3
+- [x] Configure edge-to-edge UI
+- [x] Add Room dependencies
+- [x] Add WorkManager dependencies
+- [x] Configure notification channels
 
 ---
 
 ## Phase 2 — Storage & Detection
-- [ ] Implement MediaStore query utilities
-- [ ] Implement screenshot detection logic
-- [ ] Add ContentObserver
-- [ ] Filter screenshot folders
-- [ ] Validate duplicate detection handling
+- [x] Implement MediaStore query utilities
+- [x] Implement screenshot detection logic
+- [x] Add ContentObserver
+- [x] Filter screenshot folders
+- [x] Validate duplicate detection handling
 
 ---
 
 ## Phase 3 — Notification System
-- [ ] Create notification actions
-- [ ] Implement Archive action receiver
-- [ ] Implement Keep action receiver
-- [ ] Implement Delete action receiver
-- [ ] Add heads-up notification behavior
+- [x] Create notification actions
+- [x] Implement Archive action receiver
+- [x] Implement Keep action receiver
+- [x] Implement Delete action receiver
+- [x] Add heads-up notification behavior
 
 ---
 
 ## Phase 4 — Database Layer
-- [ ] Create ScreenshotEntity
-- [ ] Create DAO
-- [ ] Create Room database
-- [ ] Implement repository layer
+- [x] Create ScreenshotEntity
+- [x] Create DAO
+- [x] Create Room database
+- [x] Implement repository layer
 
 ---
 
 ## Phase 5 — Cleanup Worker
-- [ ] Create periodic WorkManager task
-- [ ] Query expired screenshots
-- [ ] Delete from MediaStore
-- [ ] Update database state
-- [ ] Add retry handling
+- [x] Create periodic WorkManager task
+- [x] Query expired screenshots
+- [x] Delete from MediaStore
+- [x] Update database state
+- [x] Add retry handling
 
 ---
 
 ## Phase 6 — UI
-- [ ] Create Home screen
+- [x] Create Home screen (showing tracked screenshots, stats, and next scheduled cleanup time)
 - [ ] Create Settings screen
 - [ ] Create History screen
-- [ ] Implement Material 3 expressive design
+- [x] Implement Material 3 expressive design
 - [ ] Add dynamic color support
 
 ---

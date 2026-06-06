@@ -18,7 +18,10 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: HomeViewModel by viewModels {
         val app = application as ScreenshotJanitorApp
-        HomeViewModelFactory(app.repository)
+        HomeViewModelFactory(
+            app.repository,
+            androidx.work.WorkManager.getInstance(app)
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

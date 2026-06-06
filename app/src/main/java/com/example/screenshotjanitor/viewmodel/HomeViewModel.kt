@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.work.WorkManager
 import com.example.screenshotjanitor.data.db.entity.ScreenshotEntity
 import com.example.screenshotjanitor.data.repository.ScreenshotRepository
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,7 +21,10 @@ data class HomeUiState(
     val pendingCount: Int = 0
 )
 
-class HomeViewModel(private val repository: ScreenshotRepository) : ViewModel() {
+class HomeViewModel(
+    private val repository: ScreenshotRepository,
+    private val workManager: WorkManager
+) : ViewModel() {
 
     val uiState: StateFlow<HomeUiState> = repository.allScreenshots
         .map { list ->
@@ -42,6 +46,17 @@ class HomeViewModel(private val repository: ScreenshotRepository) : ViewModel() 
             initialValue = HomeUiState()
         )
 
+    val nextCleanupTimeMillis: StateFlow<Long?> = workManager.getWorkInfosForUniqueWorkFlow("ScreenshotCleanupWork")
+        .map { workInfos ->
+            val time = workInfos.firstOrNull()?.nextScheduleTimeMillis
+            if (time != null && time > 0) time else null
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
+
     fun archiveScreenshot(uri: String) {
         viewModelScope.launch {
             repository.archiveScreenshot(uri)
@@ -61,11 +76,14 @@ class HomeViewModel(private val repository: ScreenshotRepository) : ViewModel() 
     }
 }
 
-class HomeViewModelFactory(private val repository: ScreenshotRepository) : ViewModelProvider.Factory {
+class HomeViewModelFactory(
+    private val repository: ScreenshotRepository,
+    private val workManager: WorkManager
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return HomeViewModel(repository) as T
+            return HomeViewModel(repository, workManager) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
