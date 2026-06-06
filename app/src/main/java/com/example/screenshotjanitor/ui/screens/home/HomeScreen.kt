@@ -24,12 +24,15 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -54,6 +57,7 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.CleaningServices
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
@@ -71,7 +75,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -237,6 +243,7 @@ fun HomeScreen(
                 permissionLauncher.launch(list.toTypedArray())
             },
             onRunCleanup = { viewModel.runCleanupNow(context) },
+            onReschedule = { hour, minute -> viewModel.rescheduleCleanup(hour, minute, context) },
             onArchive = { viewModel.archiveScreenshot(it) },
             onKeep = { viewModel.keepScreenshot(it) },
             onDelete = { viewModel.deleteScreenshot(context, it) }
@@ -257,6 +264,7 @@ private fun HomeContent(
     onFilterSelected: (ScreenshotFilter) -> Unit,
     onRequestPermissions: () -> Unit,
     onRunCleanup: () -> Unit,
+    onReschedule: (Int, Int) -> Unit,
     onArchive: (String) -> Unit,
     onKeep: (String) -> Unit,
     onDelete: (String) -> Unit
@@ -337,6 +345,7 @@ private fun HomeContent(
                 NextCleanupBanner(
                     timeMillis = nextCleanupTime,
                     onRunNow = onRunCleanup,
+                    onReschedule = onReschedule,
                     modifier = Modifier.animateItem(
                         placementSpec = spring(
                             dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -671,12 +680,72 @@ fun StatsCard(
 
 // ─── Next cleanup banner ──────────────────────────────────────────────────────
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NextCleanupBanner(
     timeMillis: Long,
     onRunNow: () -> Unit,
+    onReschedule: (Int, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showTimePicker by remember { mutableStateOf(false) }
+
+    // Derive initial hour/minute from the current scheduled time
+    val initialHour = remember(timeMillis) {
+        java.util.Calendar.getInstance().apply { timeInMillis = timeMillis }.get(java.util.Calendar.HOUR_OF_DAY)
+    }
+    val initialMinute = remember(timeMillis) {
+        java.util.Calendar.getInstance().apply { timeInMillis = timeMillis }.get(java.util.Calendar.MINUTE)
+    }
+    val timePickerState = rememberTimePickerState(
+        initialHour = initialHour,
+        initialMinute = initialMinute,
+        is24Hour = false
+    )
+
+    if (showTimePicker) {
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            title = {
+                Text(
+                    text = "Set Cleanup Time",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Cleanup will run every day at this time.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    TimePicker(state = timePickerState)
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onReschedule(timePickerState.hour, timePickerState.minute)
+                        showTimePicker = false
+                    }
+                ) {
+                    Text("Confirm", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text("Cancel")
+                }
+            },
+            shape = RoundedCornerShape(28.dp)
+        )
+    }
+
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.tertiaryContainer
@@ -685,7 +754,9 @@ fun NextCleanupBanner(
         modifier = modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -694,7 +765,8 @@ fun NextCleanupBanner(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 16.dp, top = 14.dp, bottom = 14.dp)
+                    .clickable { showTimePicker = true }
+                    .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.AutoDelete,
@@ -715,9 +787,15 @@ fun NextCleanupBanner(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
                     )
+                    Text(
+                        text = "Tap to change time",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.55f)
+                    )
                 }
             }
 
+            // M3 Expressive flush-edge action button — stretches to match card height via IntrinsicSize
             Button(
                 onClick = onRunNow,
                 colors = ButtonDefaults.buttonColors(
@@ -730,15 +808,15 @@ fun NextCleanupBanner(
                     topEnd = 28.dp,
                     bottomEnd = 28.dp
                 ),
-                contentPadding = PaddingValues(0.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
                 modifier = Modifier
-                    .width(60.dp)
-                    .height(72.dp)
+                    .fillMaxHeight()
+                    .width(64.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
                     contentDescription = "Run cleanup now",
-                    modifier = Modifier.size(26.dp)
+                    modifier = Modifier.size(28.dp)
                 )
             }
         }

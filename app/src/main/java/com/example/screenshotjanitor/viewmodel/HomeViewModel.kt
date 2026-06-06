@@ -1,18 +1,27 @@
 package com.example.screenshotjanitor.viewmodel
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.WorkRequest
 import com.example.screenshotjanitor.data.db.entity.ScreenshotEntity
 import com.example.screenshotjanitor.data.repository.ScreenshotRepository
+import com.example.screenshotjanitor.worker.ScreenshotCleanupWorker
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import java.util.Calendar
+import java.util.concurrent.TimeUnit
 
 data class HomeUiState(
     val screenshots: List<ScreenshotEntity> = emptyList(),
@@ -52,7 +61,9 @@ class HomeViewModel(
 
     val nextCleanupTimeMillis: StateFlow<Long?> = workManager.getWorkInfosForUniqueWorkFlow("ScreenshotCleanupWork")
         .map { workInfos ->
-            val time = workInfos.firstOrNull()?.nextScheduleTimeMillis
+            val info = workInfos.firstOrNull()
+            Log.d("HomeViewModel", "WorkInfo updated: state=${info?.state}, nextScheduleTimeMillis=${info?.nextScheduleTimeMillis}, runAttemptCount=${info?.runAttemptCount}")
+            val time = info?.nextScheduleTimeMillis
             if (time != null && time > 0) time else null
         }
         .stateIn(
@@ -111,6 +122,40 @@ class HomeViewModel(
 
     fun onDeletePermissionDenied() {
         pendingUrisToDelete = emptyList()
+    }
+
+    fun rescheduleCleanup(hour: Int, minute: Int, context: Context) {
+        val now = Calendar.getInstance()
+        val target = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            // If the chosen time is already past for today, schedule for tomorrow
+            if (before(now)) add(Calendar.DAY_OF_YEAR, 1)
+        }
+        val delayMillis = target.timeInMillis - now.timeInMillis
+
+        val constraints = Constraints.Builder()
+            .setRequiresBatteryNotLow(true)
+            .setRequiresStorageNotLow(true)
+            .build()
+
+        val cleanupRequest = PeriodicWorkRequestBuilder<ScreenshotCleanupWorker>(24, TimeUnit.HOURS)
+            .setConstraints(constraints)
+            .setInitialDelay(delayMillis, TimeUnit.MILLISECONDS)
+            .setBackoffCriteria(
+                BackoffPolicy.LINEAR,
+                WorkRequest.MIN_BACKOFF_MILLIS,
+                TimeUnit.MILLISECONDS
+            )
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            "ScreenshotCleanupWork",
+            ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
+            cleanupRequest
+        )
     }
 }
 
