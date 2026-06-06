@@ -40,15 +40,27 @@ class ScreenshotContentObserver(
             MediaStore.Images.ImageColumns.RELATIVE_PATH
         )
 
-        val sortOrder = "${MediaStore.Images.ImageColumns.DATE_ADDED} DESC LIMIT 1"
+        val queryArgs = android.os.Bundle().apply {
+            putStringArray(
+                android.content.ContentResolver.QUERY_ARG_SORT_COLUMNS,
+                arrayOf(MediaStore.Images.ImageColumns.DATE_ADDED)
+            )
+            putInt(
+                android.content.ContentResolver.QUERY_ARG_SORT_DIRECTION,
+                android.content.ContentResolver.QUERY_SORT_DIRECTION_DESCENDING
+            )
+            putInt(
+                android.content.ContentResolver.QUERY_ARG_LIMIT,
+                1
+            )
+        }
 
         try {
             context.contentResolver.query(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 projection,
-                null,
-                null,
-                sortOrder
+                queryArgs,
+                null
             )?.use { cursor ->
                 if (cursor.moveToFirst()) {
                     val idIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.ImageColumns._ID)
