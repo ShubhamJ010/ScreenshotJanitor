@@ -1,6 +1,6 @@
-# ScreenshotJanitor Architecture
+# ssJanitor Architecture
 
-ScreenshotJanitor is an Android application designed to help users manage their screenshots by automatically detecting new captures, providing quick actions via notifications, and performing periodic cleanups of unwanted images.
+ssJanitor is an Android application designed to help users manage their screenshots by automatically detecting new captures, providing quick actions via notifications, and performing periodic cleanups of unwanted images.
 
 ---
 
@@ -58,7 +58,13 @@ The project follows the **MVVM (Model-ViewModel-View)** architectural pattern an
 - **NotificationActionReceiver**: 
     - A `BroadcastReceiver` that handles user clicks on notification actions (Keep, Archive).
 - **ScreenshotCleanupWorker (WorkManager)**: 
-    - A periodic background task that identifies "archived" screenshots and attempts to delete them from device storage to free up space.
+    - A periodic background task (scheduled every 24 hours) that identifies "archived" screenshots and attempts to delete them from device storage to free up space.
+
+### 4. Application Lifecycle & Initialization
+- **SsJanitorApp**: The custom `Application` class acts as the central hub for dependency initialization.
+    - It initializes the `AppDatabase`, `ScreenshotRepository`, and `SettingsRepository`.
+    - It starts the `ScreenshotDetector` upon app launch.
+    - It schedules the `ScreenshotCleanupWorker` as a unique periodic work item.
 
 ---
 

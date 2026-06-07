@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ScreenshotJanitor"
+rootProject.name = "ssJanitor"
 include(":app")

@@ -1,8 +1,8 @@
-# Screenshot Janitor
+# ssJanitor
 
 Minimal Android 14+ screenshot management utility built with Kotlin and Jetpack Compose.
 
-Screenshot Janitor monitors newly created screenshots, allows users to archive or delete them through lightweight notifications, and automatically cleans up unarchived screenshots on a schedule.
+ssJanitor monitors newly created screenshots, allows users to archive or delete them through lightweight notifications, and automatically cleans up unarchived screenshots on a schedule.
 
 The app is intentionally lightweight, battery-friendly, and fully aligned with modern Android storage and background execution policies.
 
@@ -29,7 +29,9 @@ Notifications are intentionally dismissible and non-intrusive.
 ---
 
 ## Archive System
-Archived screenshots are protected from automatic cleanup.
+Archived screenshots are marked for automatic cleanup by the Janitor.
+
+Screenshots the user wants to preserve should be marked as "Keep".
 
 The app stores metadata locally using Room instead of physically moving files.
 
@@ -46,8 +48,8 @@ For power users who want to cleanup everything by default:
 
 ## Automatic Cleanup
 A scheduled cleanup worker removes:
-- non-archived screenshots
-- older than the configured retention duration
+- archived screenshots
+- or recommends cleanup for old unarchived screenshots
 
 Powered by WorkManager for battery-efficient background execution.
 
@@ -98,13 +100,27 @@ Older Android versions are intentionally unsupported to simplify:
 
 ## Required Permissions
 
-xml <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" /> <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> 
+```xml
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+<uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
+```
 
 ---
 
 # Architecture
 
-text MediaStore Observer         ↓ Screenshot Detection         ↓ Notification Actions         ↓ Room Database         ↓ Cleanup Worker 
+```text
+MediaStore Observer
+        ↓
+Screenshot Detection
+        ↓
+Notification Actions
+        ↓
+Room Database
+        ↓
+Cleanup Worker
+```
 
 The application follows a lightweight event-driven architecture.
 
@@ -117,12 +133,12 @@ The app remains idle most of the time and only wakes when:
 # Project Structure
 
 ```
-ScreenshotJanitor/
+ssJanitor/
 │
 ├── app/
 │   ├── src/main/
 │   │
-│   ├── java/com/shubham/screenshotjanitor/
+│   ├── java/com/example/screenshotjanitor/
 │   │
 │   ├── core/
 │   │   ├── constants/
@@ -183,7 +199,7 @@ ScreenshotJanitor/
 │   │
 │   ├── MainActivity.kt
 │   │
-│   └── ScreenshotJanitorApp.kt
+│   └── SsJanitorApp.kt
 │   │
 │   ├── res/
 │   └── AndroidManifest.xml
@@ -197,19 +213,48 @@ ScreenshotJanitor/
 
 # Database Schema
 
-kotlin @Entity(tableName = "screenshots") data class ScreenshotEntity(     @PrimaryKey     val uri: String,      val fileName: String,      val createdAt: Long,      val archived: Boolean = false,      val deleted: Boolean = false ) 
+kotlin
+@Entity(tableName = "screenshots")
+data class ScreenshotEntity(
+    @PrimaryKey
+    val uri: String,
+    val fileName: String,
+    val createdAt: Long,
+    val archived: Boolean = false,
+    val deleted: Boolean = false,
+    val kept: Boolean = false
+)
 
 ---
 
 # Notification Flow
 
-text Screenshot Captured         ↓ Notification Appears         ↓ User Action: - Archive - Keep - Delete         ↓ Database Updated 
+```text
+Screenshot Captured
+        ↓
+Notification Appears
+        ↓
+User Action:
+- Archive (Mark for Cleanup)
+- Keep (Preserve)
+- Delete (Immediate)
+        ↓
+Database Updated
+```
 
 ---
 
 # Cleanup Flow
 
-text Scheduled Worker Executes         ↓ Fetch Old Unarchived Screenshots         ↓ Delete From MediaStore         ↓ Update Database State 
+```text
+Scheduled Worker Executes
+        ↓
+Fetch Archived Screenshots
+        ↓
+Delete From MediaStore
+        ↓
+Update Database State
+```
 
 ---
 
@@ -338,7 +383,7 @@ These are intentionally out of scope for the MVP.
 - [ ] Create Settings screen
 - [ ] Create History screen
 - [x] Implement Material 3 expressive design
-- [ ] Add dynamic color support
+- [x] Add dynamic color support
 
 ---
 
@@ -347,7 +392,7 @@ These are intentionally out of scope for the MVP.
 - [ ] Test notification actions
 - [ ] Test cleanup reliability
 - [ ] Test battery impact
-- [ ] Test Android 14 behavior
+- [x] Test Android 14 behavior
 - [ ] Test process death recovery
 
 ---

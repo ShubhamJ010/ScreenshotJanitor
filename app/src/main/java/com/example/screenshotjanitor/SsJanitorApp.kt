@@ -15,9 +15,9 @@ import com.example.screenshotjanitor.observer.ScreenshotDetector
 import com.example.screenshotjanitor.worker.ScreenshotCleanupWorker
 import java.util.concurrent.TimeUnit
 
-class ScreenshotJanitorApp : Application() {
+class SsJanitorApp : Application() {
 
-    private val TAG = "ScreenshotJanitorApp"
+    private val TAG = "SsJanitorApp"
 
     lateinit var database: AppDatabase
         private set
@@ -32,7 +32,7 @@ class ScreenshotJanitorApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "Application onCreate - initializing Screenshot Janitor")
+        Log.d(TAG, "Application onCreate - initializing ssJanitor")
 
         database = AppDatabase.getDatabase(this)
         repository = ScreenshotRepository(database.screenshotDao())

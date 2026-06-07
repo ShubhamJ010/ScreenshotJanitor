@@ -13,14 +13,14 @@ import androidx.compose.ui.Modifier
 import com.example.screenshotjanitor.core.constants.AppConstants
 import com.example.screenshotjanitor.notifications.ScreenshotNotificationManager
 import com.example.screenshotjanitor.ui.screens.home.HomeScreen
-import com.example.screenshotjanitor.ui.theme.ScreenshotJanitorTheme
+import com.example.screenshotjanitor.ui.theme.SsJanitorTheme
 import com.example.screenshotjanitor.viewmodel.HomeViewModel
 import com.example.screenshotjanitor.viewmodel.HomeViewModelFactory
 
 class MainActivity : ComponentActivity() {
 
     private val viewModel: HomeViewModel by viewModels {
-        val app = application as ScreenshotJanitorApp
+        val app = application as SsJanitorApp
         HomeViewModelFactory(
             app.repository,
             app.settingsRepository,
@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         handleIntent(intent)
         setContent {
-            ScreenshotJanitorTheme {
+            SsJanitorTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
