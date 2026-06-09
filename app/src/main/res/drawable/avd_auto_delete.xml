@@ -9,25 +9,31 @@
             android:viewportHeight="108">
 
             <!--
-                ABSOLUTE CENTERING STRATEGY (MAX SIZE):
-                1. Scale increased by another 30% from 1.27:
-                   1.27 * 1.30 = 1.651 (using 1.65)
-                2. Canvas Center (54, 54) - Icon Logic Center (12, 12) = Translate 42.
-                3. Pivot at (12, 12) ensures it grows perfectly from the center.
+                PRECISION ALIGNMENT & SCALING:
+                1. Geometric Center: The icon spans X:[1, 23] and Y:[1, 23].
+                   True Center X = (1 + 23) / 2 = 12.0.
+                   True Center Y = (1 + 23) / 2 = 12.0.
+                2. Scaling: Increased by another 30% to 2.15.
+                3. Translation: To align icon center (12, 12) to canvas center (54, 54):
+                   TranslateX = 54 - 12 = 42
+                   TranslateY = 54 - 12 = 42
+                4. Internal Lid Alignment: The lid (X: 1 to 15) and bin body (X: 2 to 14)
+                   are both perfectly centered at X=8.0.
             -->
             <group
                 android:name="autoDeleteGroup"
                 android:pivotX="12"
                 android:pivotY="12"
-                android:scaleX="1.65"
-                android:scaleY="1.65"
+                android:scaleX="2.15"
+                android:scaleY="2.15"
                 android:translateX="42"
                 android:translateY="42">
 
                 <!-- Animated element: The bin lid -->
+                <!-- Hinging from the bottom-center of the lid path (X:8, Y:4) -->
                 <group
                     android:name="lidGroup"
-                    android:pivotX="9"
+                    android:pivotX="8"
                     android:pivotY="4">
                     <path
                         android:name="path_top"
