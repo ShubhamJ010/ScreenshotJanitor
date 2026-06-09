@@ -4,18 +4,25 @@ ssJanitor follows **MVVM-lite** — a lightweight Model-View-ViewModel pattern w
 
 ## Diagram
 
-```text
-[ Compose UI ]
-      ⬆  ⬇
-[ HomeViewModel ]
-      ⬆  ⬇
-[ ScreenshotRepository ] ←→ [ ScreenshotCleanupWorker (WorkManager) ]
-      ⬆  ⬇                          ⬆
-      +→ [ Room Database ] ←─────────+
-      ⬆
-[ ScreenshotDetector (ContentObserver) ] → [ ScreenshotNotificationManager ]
-                                                  ⬇
-                                        [ NotificationActionReceiver ]
+```mermaid
+flowchart
+    A[Compose UI]
+    B[HomeViewModel]
+    C[ScreenshotRepository]
+    D[ScreenshotCleanupWorker]
+    E[Room Database]
+    F[ScreenshotDetector]
+    G[ScreenshotNotificationManager]
+    H[NotificationActionReceiver]
+
+    A <--> B
+    B <--> C
+    C <--> D
+    C <--> E
+    D <--> E
+    F --> E
+    F --> G
+    G --> H
 ```
 
 ## Layers

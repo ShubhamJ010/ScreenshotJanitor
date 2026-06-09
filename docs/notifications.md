@@ -2,17 +2,16 @@
 
 ## Flow
 
-```text
-Screenshot Captured
-        ↓
-Notification Appears
-        ↓
-User Action:
-- Archive (Mark for Cleanup)
-- Keep (Preserve)
-- Delete (Immediate)
-        ↓
-Database Updated
+```mermaid
+flowchart TD
+    A[Screenshot Captured] --> B[Notification Appears]
+    B --> C{User Action}
+    C -->|Archive| D[Mark for Cleanup]
+    C -->|Keep| E[Preserve]
+    C -->|Delete| F[Immediate Delete]
+    D --> G[Database Updated]
+    E --> G
+    F --> G
 ```
 
 ## Implementation

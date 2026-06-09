@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Monochrome version of ScreenshotJanitor broom icon.
-  Used by Android 13+ Material You themed icons.
-  All shapes use black fill — Android tints with wallpaper-derived color.
+  Monochrome layer for Android 13+ themed icons.
+  Black shapes on transparent — system tints with wallpaper accent color.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -10,22 +9,18 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Broom handle -->
     <path
         android:fillColor="#000000"
         android:pathData="M51,24 L56,24 L58,57 L53,57 Z" />
 
-    <!-- Handle round end-cap -->
     <path
         android:fillColor="#000000"
         android:pathData="M53.5,24 m-4,0 a4,4 0,1,1 8,0 a4,4 0,1,1 -8,0" />
 
-    <!-- Binding band -->
     <path
         android:fillColor="#000000"
         android:pathData="M47,56 L64,56 L65,63 L46,63 Z" />
 
-    <!-- Bristles -->
     <path
         android:fillColor="#000000"
         android:pathData="M44,63 L67,63 L70,82 L41,82 Z" />

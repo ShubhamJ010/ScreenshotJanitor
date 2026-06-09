@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Material You color attributes used by the adaptive launcher icon.
+      Declared here so they can be referenced via ?attr/ in color resources
+      and styles, and resolved on all API levels.
+      Android 12+ (API 31) overrides these with wallpaper-derived values
+      for dynamic icon theming.
+    -->
+    <attr name="colorPrimary" format="color" />
+    <attr name="colorOnPrimary" format="color" />
+</resources>

@@ -2,14 +2,11 @@
 
 ## Flow
 
-```text
-Scheduled Worker Executes
-        ↓
-Fetch Archived Screenshots from Room
-        ↓
-Delete From MediaStore
-        ↓
-Update Database State to 'deleted'
+```mermaid
+flowchart TD
+    A[Scheduled Worker Executes] --> B[Fetch Archived Screenshots from Room]
+    B --> C[Delete From MediaStore]
+    C --> D[Update Database State to 'deleted']
 ```
 
 ## Implementation

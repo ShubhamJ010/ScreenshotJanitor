@@ -8,6 +8,6 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <!-- App icon background (brand teal from LightPrimary) -->
+    <!-- Adaptive icon background — system overrides with dynamic color on API 31+ -->
     <color name="ic_launcher_background">#006E6D</color>
 </resources>

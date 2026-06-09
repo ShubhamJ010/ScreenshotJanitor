@@ -6,12 +6,19 @@
       Uses Theme.SplashScreen for AndroidX compat, but overrides the
       platform-level android:windowSplashScreenBackground to follow
       the system's dynamic Material You color (via DeviceDefault's colorBackground).
+      colorPrimary / colorOnPrimary are defined here so the launcher icon
+      can resolve them on all API levels. Android 12+ overrides them with
+      wallpaper-derived values for Material You icon theming.
     -->
     <style name="Theme.ssJanitor" parent="Theme.SplashScreen">
+        <!-- Material You icon colors (fallback values for pre-Android 12) -->
+        <item name="colorPrimary">#006E6D</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+
         <!-- Icon shown in the splash circle -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
-        <!-- Teal circle behind the icon so white broom stays visible -->
-        <item name="windowSplashScreenIconBackgroundColor">@color/ic_launcher_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_foreground</item>
+        <!-- Dynamic Material You background for splash icon -->
+        <item name="windowSplashScreenIconBackgroundColor">?attr/colorPrimary</item>
         <item name="windowSplashScreenAnimationDuration">400</item>
         <!-- After splash, Compose takes over theming -->
         <item name="postSplashScreenTheme">@style/Theme.ssJanitor.Main</item>

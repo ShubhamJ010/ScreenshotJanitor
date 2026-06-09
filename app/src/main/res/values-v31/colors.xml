@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Material You dynamic background for the launcher icon.
+      On API 31+ the framework exposes wallpaper-derived color resources.
+      system_accent1_600 is a vibrant mid-tone from the user's wallpaper.
+      Falls back to the static teal in values/colors.xml on pre-31.
+    -->
+    <color name="ic_launcher_background">@android:color/system_accent1_600</color>
+</resources>
