@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="108dp"
+            android:height="108dp"
+            android:viewportWidth="24"
+            android:viewportHeight="24">
+            <group
+                android:name="autoDeleteGroup"
+                android:pivotX="12"
+                android:pivotY="12"
+                android:scaleX="0.45"
+                android:scaleY="0.45"
+                android:translateX="6.6"
+                android:translateY="6.6">
+
+                <!-- Animated element: The bin lid -->
+                <group
+                    android:name="lidGroup"
+                    android:pivotX="9"
+                    android:pivotY="4">
+                    <path
+                        android:name="path_top"
+                        android:fillColor="@android:color/system_accent1_100"
+                        android:pathData="M15,2l-3.5,0l-1,-1l-5,0l-1,1l-3.5,0l0,2l14,0z" />
+                </group>
+
+                <!-- Static element: Trash can body -->
+                <path
+                    android:name="path_main"
+                    android:fillColor="@android:color/system_accent1_100"
+                    android:pathData="M16,9c-0.7,0 -1.37,0.1 -2,0.29V5H2v14h7.68c1.12,2.36 3.53,4 6.32,4c3.87,0 7,-3.13 7,-7C23,12.13 19.87,9 16,9zM16,21c-2.76,0 -5,-2.24 -5,-5s2.24,-5 5,-5s5,2.24 5,5S18.76,21 16,21z" />
+
+                <!-- Static element: The clock hand -->
+                <path
+                    android:name="path_hand"
+                    android:fillColor="@android:color/system_accent1_100"
+                    android:pathData="M16.5,12l-1.5,0l0,5l3.6,2.1l0.8,-1.2l-2.9,-1.7z" />
+            </group>
+        </vector>
+    </aapt:attr>
+
+    <!--
+      Lid Opening Animation:
+      Lifts and tilts the lid to simulate the bin opening and closing.
+    -->
+    <target android:name="lidGroup">
+        <aapt:attr name="android:animation">
+            <set>
+                <!-- Open Lid -->
+                <set>
+                    <objectAnimator
+                        android:duration="400"
+                        android:propertyName="translateY"
+                        android:valueFrom="0"
+                        android:valueTo="-3"
+                        android:interpolator="@android:anim/decelerate_interpolator" />
+                    <objectAnimator
+                        android:duration="400"
+                        android:propertyName="rotation"
+                        android:valueFrom="0"
+                        android:valueTo="-20"
+                        android:interpolator="@android:anim/decelerate_interpolator" />
+                </set>
+                <!-- Close Lid -->
+                <set>
+                    <objectAnimator
+                        android:duration="400"
+                        android:startOffset="600"
+                        android:propertyName="translateY"
+                        android:valueFrom="-3"
+                        android:valueTo="0"
+                        android:interpolator="@android:anim/bounce_interpolator" />
+                    <objectAnimator
+                        android:duration="400"
+                        android:startOffset="600"
+                        android:propertyName="rotation"
+                        android:valueFrom="-20"
+                        android:valueTo="0"
+                        android:interpolator="@android:anim/bounce_interpolator" />
+                </set>
+            </set>
+        </aapt:attr>
+    </target>
+
+    <!--
+      Color Pulse:
+      Keeps the icon breathing with Material You accents.
+    -->
+    <target android:name="path_main">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="500"
+                    android:propertyName="fillColor"
+                    android:valueFrom="@android:color/system_accent1_100"
+                    android:valueTo="@android:color/system_accent1_300" />
+                <objectAnimator
+                    android:duration="500"
+                    android:startOffset="500"
+                    android:propertyName="fillColor"
+                    android:valueFrom="@android:color/system_accent1_300"
+                    android:valueTo="@android:color/system_accent1_100" />
+            </set>
+        </aapt:attr>
+    </target>
+
+</animated-vector>

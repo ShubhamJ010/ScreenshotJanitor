@@ -16,7 +16,7 @@
         <item name="colorOnPrimary">#FFFFFF</item>
 
         <!-- Icon shown in the splash circle -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_broom_sweep</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_auto_delete</item>
         <!-- Dynamic Material You background for splash icon -->
         <item name="windowSplashScreenIconBackgroundColor">?attr/colorPrimary</item>
         <item name="windowSplashScreenAnimationDuration">400</item>

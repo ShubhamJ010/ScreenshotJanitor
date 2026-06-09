@@ -3,7 +3,7 @@
     <!--
       Material You Dynamic Launcher Icon Colors
       Background: The darkest shade (900) from the user's wallpaper palette for maximum contrast.
-      Foreground: A very light shade (100) to make the broom icon pop.
+      Foreground: A very light shade (100) to make the auto_delete icon pop.
     -->
     <color name="ic_launcher_background">@android:color/system_accent1_900</color>
     <color name="ic_launcher_foreground_color">@android:color/system_accent1_100</color>
