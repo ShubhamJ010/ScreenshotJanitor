@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.1-alpha] - 2026-06-10
+
+### Added
+- `ScreenshotDetectionService` for reliable background monitoring
+- `BootReceiver` to restart detection after device reboot
+- Foreground service support with dedicated notification channel
+- `FOREGROUND_SERVICE_SPECIAL_USE` permission for screenshot monitoring
+
+### Changed
+- Refactored `SsJanitorApp` to use the background service instead of direct `ScreenshotDetector`
+- Updated notification manager to support service notifications
+
+## [0.3.0-alpha] - 2026-06-10
+
+### Changed
+- AVD: Update scale and align lid pivot for `avd_auto_delete.xml`
+
 ## [0.2.0-alpha] - 2026-06-09
 
 ### Added

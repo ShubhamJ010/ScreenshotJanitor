@@ -6,6 +6,10 @@ object AppConstants {
     const val NOTIFICATION_CHANNEL_DESC = "Notifications for new screenshots with actions"
     const val NOTIFICATION_ID = 1001
     const val NOTIFICATION_CLEANUP_ID = 1002
+    const val NOTIFICATION_SERVICE_ID = 1003
+
+    const val NOTIFICATION_SERVICE_CHANNEL_ID = "ssjanitor_service_channel"
+    const val NOTIFICATION_SERVICE_CHANNEL_NAME = "Background Detection"
 
     const val ACTION_ARCHIVE = "com.example.ssjanitor.ACTION_ARCHIVE"
     const val ACTION_KEEP = "com.example.ssjanitor.ACTION_KEEP"

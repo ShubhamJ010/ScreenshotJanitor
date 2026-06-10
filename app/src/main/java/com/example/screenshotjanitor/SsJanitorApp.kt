@@ -11,13 +11,14 @@ import androidx.work.WorkRequest
 import com.example.screenshotjanitor.data.db.AppDatabase
 import com.example.screenshotjanitor.data.repository.ScreenshotRepository
 import com.example.screenshotjanitor.data.repository.SettingsRepository
-import com.example.screenshotjanitor.observer.ScreenshotDetector
+import android.content.Intent
+import com.example.screenshotjanitor.service.ScreenshotDetectionService
 import com.example.screenshotjanitor.worker.ScreenshotCleanupWorker
 import java.util.concurrent.TimeUnit
 
 class SsJanitorApp : Application() {
 
-    private val TAG = "SsJanitorApp"
+    private val tag = "SsJanitorApp"
 
     lateinit var database: AppDatabase
         private set
@@ -28,24 +29,27 @@ class SsJanitorApp : Application() {
     lateinit var settingsRepository: SettingsRepository
         private set
 
-    private lateinit var detector: ScreenshotDetector
-
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "Application onCreate - initializing ssJanitor")
+        Log.d(tag, "Application onCreate - initializing ssJanitor")
 
         database = AppDatabase.getDatabase(this)
         repository = ScreenshotRepository(database.screenshotDao())
         settingsRepository = SettingsRepository(this)
 
-        detector = ScreenshotDetector(this, settingsRepository)
-        detector.startDetector()
+        startDetectionService()
 
         scheduleCleanupWorker()
     }
 
+    fun startDetectionService() {
+        Log.d(tag, "Starting ScreenshotDetectionService")
+        val intent = Intent(this, ScreenshotDetectionService::class.java)
+        startForegroundService(intent)
+    }
+
     private fun scheduleCleanupWorker() {
-        Log.d(TAG, "Scheduling periodic cleanup worker (every 24 hours)")
+        Log.d(tag, "Scheduling periodic cleanup worker (every 24 hours)")
         val constraints = Constraints.Builder()
             .setRequiresBatteryNotLow(true)
             .setRequiresStorageNotLow(true)
@@ -67,8 +71,4 @@ class SsJanitorApp : Application() {
         )
     }
 
-    override fun onTerminate() {
-        super.onTerminate()
-        detector.stopDetector()
-    }
 }

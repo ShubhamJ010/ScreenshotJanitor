@@ -24,15 +24,46 @@ class ScreenshotNotificationManager(private val context: Context) {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
+            val mainChannel = NotificationChannel(
                 AppConstants.NOTIFICATION_CHANNEL_ID,
                 AppConstants.NOTIFICATION_CHANNEL_NAME,
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = AppConstants.NOTIFICATION_CHANNEL_DESC
             }
-            notificationManager.createNotificationChannel(channel)
+            
+            val serviceChannel = NotificationChannel(
+                AppConstants.NOTIFICATION_SERVICE_CHANNEL_ID,
+                AppConstants.NOTIFICATION_SERVICE_CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Keeps screenshot detection active in the background"
+            }
+            
+            notificationManager.createNotificationChannel(mainChannel)
+            notificationManager.createNotificationChannel(serviceChannel)
         }
+    }
+
+    fun createForegroundServiceNotification(): android.app.Notification {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            10,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        return NotificationCompat.Builder(context, AppConstants.NOTIFICATION_SERVICE_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("Janitor Active")
+            .setContentText("Monitoring for new screenshots...")
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setContentIntent(pendingIntent)
+            .setOngoing(true)
+            .build()
     }
 
     fun showScreenshotNotification(uriString: String, isAutoArchived: Boolean = false) {
