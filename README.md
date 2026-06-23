@@ -83,6 +83,7 @@ app/src/main/java/com/example/screenshotjanitor/
 | [Database Schema](docs/database.md) | Room entities, DAO, repository |
 | [Notifications](docs/notifications.md) | Notification flow & action handling |
 | [Cleanup Worker](docs/cleanup.md) | WorkManager-based cleanup pipeline |
+| [Resource Usage](docs/resource-usage.md) | Foreground / background CPU, memory, and battery profiling |
 | [Development](docs/development.md) | Principles, design goals, MVP scope, future ideas |
 | [Changelog](CHANGELOG.md) | Release history |
 

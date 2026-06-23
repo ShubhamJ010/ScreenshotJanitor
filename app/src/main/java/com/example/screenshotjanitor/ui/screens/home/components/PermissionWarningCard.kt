@@ -30,8 +30,11 @@ fun PermissionWarningCard(
     hasNotificationPermission: Boolean,
     hasStoragePermission: Boolean,
     isAllFilesManager: Boolean,
+    isBatteryOptDisabled: Boolean,
     onRequestPermissions: () -> Unit,
-    onRequestAllFilesAccess: () -> Unit
+    onRequestAllFilesAccess: () -> Unit,
+    onRequestDisableBatteryOpt: () -> Unit,
+    onRequestAutoStart: () -> Unit
 ) {
     Card(
         colors = CardDefaults.cardColors(
@@ -60,13 +63,16 @@ fun PermissionWarningCard(
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )
             }
-            val message = remember(hasStoragePermission, hasNotificationPermission, isAllFilesManager) {
+            val message = remember(hasStoragePermission, hasNotificationPermission, isAllFilesManager, isBatteryOptDisabled) {
                 buildString {
                     append("The app needs permissions to function properly:\n")
                     if (!hasStoragePermission) append("• Read Media Images (to detect screenshots)\n")
                     if (!hasNotificationPermission) append("• Post Notifications (to show quick action options)\n")
                     if (!isAllFilesManager && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         append("• All Files Access (needed for AUTOMATIC background cleanup of system screenshots)\n")
+                    }
+                    if (!isBatteryOptDisabled) {
+                        append("• Disable Battery Optimization (prevents system from killing background detection)\n")
                     }
                 }
             }
@@ -78,13 +84,21 @@ fun PermissionWarningCard(
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (!isAllFilesManager && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     TextButton(onClick = onRequestAllFilesAccess) {
-                        Text("Grant All Files Access", fontWeight = FontWeight.Bold)
+                        Text("All Files Access", fontWeight = FontWeight.Bold)
                     }
+                }
+                if (!isBatteryOptDisabled) {
+                    TextButton(onClick = onRequestDisableBatteryOpt) {
+                        Text("No Kill", fontWeight = FontWeight.Bold)
+                    }
+                }
+                TextButton(onClick = onRequestAutoStart) {
+                    Text("Auto Start", fontWeight = FontWeight.Bold)
                 }
                 if (!hasStoragePermission || !hasNotificationPermission) {
                     Button(

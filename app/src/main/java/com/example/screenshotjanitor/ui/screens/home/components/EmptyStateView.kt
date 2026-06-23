@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun EmptyStateView(
     message: String = "No screenshots being tracked yet.",
+    subtitle: String? = null,
     icon: ImageVector = Icons.Default.Image,
     modifier: Modifier = Modifier
 ) {
@@ -50,5 +51,13 @@ fun EmptyStateView(
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.outline
         )
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f)
+            )
+        }
     }
 }

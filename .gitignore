@@ -13,3 +13,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+.android-testing-skills-source/
+.agent/
