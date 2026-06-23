@@ -128,6 +128,7 @@ fun HomeContent(
     val maxPull = 520f
     val pullOffsetAnim = remember { Animatable(0f) }
     var isHapticTriggered by remember { mutableStateOf(false) }
+    var isReleasing by remember { mutableStateOf(false) }
 
     // True once user has scrolled all the way to the bottom of pending+achieved
     val isAtBottom = remember {
@@ -147,6 +148,7 @@ fun HomeContent(
             ): Offset {
                 // Only accumulate pull when the user is actively dragging at the bottom
                 // (ignore fling/side-effect overscroll so fast scrolls don't accidentally trigger kept)
+                if (isReleasing) isReleasing = false
                 if (!showKept && keptList.isNotEmpty() && available.y < 0 && isAtBottom.value && source == NestedScrollSource.UserInput) {
                     // Apply sqrt rubber-band tension: feels harder the further you pull
                     val rawDelta = -available.y
@@ -193,14 +195,17 @@ fun HomeContent(
                         } else {
                             view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                         }
+                    } else {
+                        isReleasing = true
                     }
                     pullOffsetAnim.animateTo(
                         targetValue = 0f,
                         animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMediumLow
                         )
                     )
+                    isReleasing = false
                     isHapticTriggered = false
                 }
                 return Velocity.Zero
@@ -209,7 +214,7 @@ fun HomeContent(
     }
 
     val dateFormatter = remember { SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault()) }
-    val showEmptyState = pendingList.isEmpty() && achievedList.isEmpty() && (!showKept || keptList.isEmpty())
+    val showEmptyState = pendingList.isEmpty() && achievedList.isEmpty() && keptList.isEmpty()
 
     LazyColumn(
         state = listState,
@@ -260,7 +265,20 @@ fun HomeContent(
         item(key = "stats_grid") {
             StatsGrid(
                 uiState = uiState,
-                onArchiveLongClick = onToggleAutoArchive
+                showKept = showKept,
+                onArchiveLongClick = onToggleAutoArchive,
+                onKeptLongClick = {
+                    if (showKept) {
+                        if (pendingList.isNotEmpty() || achievedList.isNotEmpty()) {
+                            showKept = false
+                        }
+                    } else {
+                        showKept = true
+                        coroutineScope.launch {
+                            listState.animateScrollToItem(listState.layoutInfo.totalItemsCount)
+                        }
+                    }
+                }
             )
         }
 
@@ -464,6 +482,7 @@ fun HomeContent(
                     val pullPercentage = (pullOffsetAnim.value / pullThreshold).coerceIn(0f, 1f)
                     val isAtEnd by isAtBottom
                     val isPulling = pullPercentage > 0f
+                    val showPullText = isPulling && !isReleasing
                     val isReadyToRelease = pullPercentage >= 1f
 
                     val indicatorAlpha by animateFloatAsState(
@@ -565,17 +584,15 @@ fun HomeContent(
 
                         // Text + progress — only appear during active pull
                         AnimatedVisibility(
-                            visible = isPulling,
+                            visible = showPullText,
                             enter = fadeIn(
                                 spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow)
                             ) + expandVertically(
                                 expandFrom = Alignment.Top,
                                 animationSpec = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow)
                             ),
-                            exit = shrinkVertically(
-                                animationSpec = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium)
-                            ) + fadeOut(
-                                spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium)
+                            exit = fadeOut(
+                                tween(durationMillis = 200)
                             )
                         ) {
                             Column(

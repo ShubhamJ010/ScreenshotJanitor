@@ -1,10 +1,20 @@
 package com.example.screenshotjanitor.ui.screens.home.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material3.Card
@@ -26,10 +37,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -41,8 +56,10 @@ import com.example.screenshotjanitor.viewmodel.HomeUiState
 @Composable
 fun StatsGrid(
     uiState: HomeUiState,
+    showKept: Boolean = false,
     modifier: Modifier = Modifier,
-    onArchiveLongClick: () -> Unit = {}
+    onArchiveLongClick: () -> Unit = {},
+    onKeptLongClick: () -> Unit = {}
 ) {
     val entranceProgress = remember { Animatable(0f) }
 
@@ -55,6 +72,8 @@ fun StatsGrid(
             )
         )
     }
+
+    var showCleanedBytes by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier.graphicsLayer {
@@ -100,23 +119,59 @@ fun StatsGrid(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            StatsCard(
-                title = "Kept",
-                value = uiState.keptCount,
-                delayMs = 200,
-                icon = Icons.Default.Bookmark,
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.weight(1f)
+            Box(modifier = Modifier.weight(1f)) {
+                StatsCard(
+                    title = "Kept",
+                    value = uiState.keptCount,
+                    delayMs = 200,
+                    icon = Icons.Default.Bookmark,
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.fillMaxWidth(),
+                    onLongClick = onKeptLongClick
+                )
+                if (showKept && uiState.keptCount > 0) {
+                    StatsCardBadge(
+                        text = "SHOWN",
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .offset(y = 3.dp)
+                    )
+                }
+            }
+            val isDark = isSystemInDarkTheme()
+            val greenContainer = if (isDark) Color(0xFF1B5E20) else Color(0xFFC8E6C9)
+            val greenContent = if (isDark) Color(0xFFC8E6C9) else Color(0xFF1B5E20)
+
+            val targetContainer by animateColorAsState(
+                targetValue = if (showCleanedBytes) greenContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
+                label = "cleanedBg"
             )
+            val targetContent by animateColorAsState(
+                targetValue = if (showCleanedBytes) greenContent else MaterialTheme.colorScheme.onSurface,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
+                label = "cleanedContent"
+            )
+            val iconScale by animateFloatAsState(
+                targetValue = if (showCleanedBytes) 1.2f else 1f,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessHigh),
+                label = "cleanedIcon"
+            )
+
             StatsCard(
-                title = "Cleaned",
+                title = if (showCleanedBytes) "Freed Up" else "Cleaned",
                 value = uiState.deletedCount,
                 delayMs = 300,
-                icon = Icons.Default.DeleteOutline,
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f)
+                label = if (showCleanedBytes) formatBytes(uiState.deletedBytes) else null,
+                icon = if (showCleanedBytes) Icons.Default.CheckCircle else Icons.Default.DeleteOutline,
+                containerColor = targetContainer,
+                contentColor = targetContent,
+                modifier = Modifier.weight(1f),
+                onLongClick = { showCleanedBytes = !showCleanedBytes },
+                iconModifier = Modifier.scale(iconScale)
             )
         }
     }
@@ -128,11 +183,13 @@ fun StatsCard(
     title: String,
     value: Int,
     delayMs: Int = 0,
+    label: String? = null,
     icon: ImageVector,
     containerColor: Color,
     contentColor: Color,
     modifier: Modifier = Modifier,
-    onLongClick: (() -> Unit)? = null
+    onLongClick: (() -> Unit)? = null,
+    iconModifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier.then(
@@ -160,26 +217,56 @@ fun StatsCard(
                     style = MaterialTheme.typography.labelLarge,
                     color = contentColor.copy(alpha = 0.7f)
                 )
-                AnimatedCounter(
-                    targetValue = value,
-                    delayMs = delayMs,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Black,
-                    color = contentColor
-                )
+                if (label != null) {
+                    AnimatedContent(
+                        targetState = label,
+                        transitionSpec = {
+                            (slideInVertically { -it } + fadeIn(tween(180))) togetherWith
+                            (slideOutVertically { it } + fadeOut(tween(90)))
+                        },
+                        label = "byteLabel"
+                    ) { displayText ->
+                        Text(
+                            text = displayText,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Black,
+                            color = contentColor
+                        )
+                    }
+                } else {
+                    AnimatedCounter(
+                        targetValue = value,
+                        delayMs = delayMs,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Black,
+                        color = contentColor
+                    )
+                }
             }
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = contentColor.copy(alpha = 0.2f),
-                modifier = Modifier.size(32.dp)
+                tint = contentColor.copy(alpha = if (label != null) 0.6f else 0.2f),
+                modifier = Modifier.size(32.dp).then(iconModifier)
             )
         }
     }
 }
 
+private fun formatBytes(bytes: Long): String {
+    val mb = bytes / (1024.0 * 1024.0)
+    return if (mb < 1000) {
+        String.format("%.1f", mb) + " MB"
+    } else {
+        String.format("%.2f", mb / 1024.0) + " GB"
+    }
+}
+
 @Composable
 fun StatsCardBadge(
+    text: String = "AUTO",
+    containerColor: Color = MaterialTheme.colorScheme.tertiary,
+    contentColor: Color = MaterialTheme.colorScheme.onTertiary,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -188,13 +275,13 @@ fun StatsCardBadge(
         Box(
             modifier = Modifier
                 .clip(StampShape)
-                .background(MaterialTheme.colorScheme.tertiary)
+                .background(containerColor)
                 .padding(horizontal = 8.dp, vertical = 3.dp)
         ) {
             Text(
-                "AUTO",
+                text,
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
-                color = MaterialTheme.colorScheme.onTertiary,
+                color = contentColor,
                 fontWeight = FontWeight.Bold
             )
         }

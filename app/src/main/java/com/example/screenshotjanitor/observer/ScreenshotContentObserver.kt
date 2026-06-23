@@ -97,11 +97,20 @@ class ScreenshotContentObserver(
         CoroutineScope(Dispatchers.IO).launch {
             val existing = repository.getScreenshotByUri(uriString)
             if (existing == null) {
+                val uri = Uri.parse(uriString)
+                val fileSize = try {
+                    context.contentResolver.openFileDescriptor(uri, "r")?.use { fd ->
+                        fd.statSize
+                    } ?: 0L
+                } catch (e: Exception) {
+                    0L
+                }
                 val isAutoArchive = settingsRepository.isAutoArchiveEnabled()
                 val entity = ScreenshotEntity(
                     uri = uriString,
                     fileName = fileName,
                     createdAt = createdAt,
+                    fileSize = fileSize,
                     archived = isAutoArchive,
                     deleted = false
                 )

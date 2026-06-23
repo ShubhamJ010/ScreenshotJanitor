@@ -33,6 +33,7 @@ data class HomeUiState(
     val archivedCount: Int = 0,
     val keptCount: Int = 0,
     val deletedCount: Int = 0,
+    val deletedBytes: Long = 0L,
     val pendingCount: Int = 0,
     val isAutoArchiveEnabled: Boolean = false
 )
@@ -60,10 +61,14 @@ class HomeViewModel(
         var archived = 0
         var kept = 0
         var deleted = 0
+        var deletedBytes = 0L
         var pending = 0
         screenshots.forEach {
             when {
-                it.deleted -> deleted++
+                it.deleted -> {
+                    deleted++
+                    deletedBytes += it.fileSize
+                }
                 it.kept -> kept++
                 it.archived -> archived++
                 else -> pending++
@@ -75,6 +80,7 @@ class HomeViewModel(
             archivedCount = archived,
             keptCount = kept,
             deletedCount = deleted,
+            deletedBytes = deletedBytes,
             pendingCount = pending,
             isAutoArchiveEnabled = isAutoEnabled
         )
