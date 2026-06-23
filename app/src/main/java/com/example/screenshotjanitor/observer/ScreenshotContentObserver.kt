@@ -87,8 +87,9 @@ class ScreenshotContentObserver(
                     if (isScreenshot) {
                         val contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
                         handleNewScreenshot(contentUri.toString(), displayName, dateAdded)
+                        return true
                     }
-                    return true
+                    return false
                 }
             }
         } catch (e: Exception) {

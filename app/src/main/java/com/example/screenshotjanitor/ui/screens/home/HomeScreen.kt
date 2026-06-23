@@ -238,7 +238,6 @@ fun HomeScreen(
                 }
                 batteryOptLauncher.launch(intent)
             },
-            onRequestAutoStart = { com.example.screenshotjanitor.core.constants.AutoStartUtil.openAutoStartSettings(context) },
             onRunCleanup = { viewModel.runCleanupNow(context) },
             onReschedule = { hour, minute -> viewModel.rescheduleCleanup(hour, minute, context) },
             onArchive = { viewModel.archiveScreenshot(it) },

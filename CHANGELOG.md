@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.1-alpha] - 2026-06-24
+
+### Changed
+- Extracted battery optimization opt-out from `PermissionWarningCard` into its own dedicated card with standalone "Battery Usage" button
+- `PermissionWarningCard` — simplified to only handle storage, notification, and all-files-access permissions
+
+### Removed
+- Auto-start permission request flow (removed `onRequestAutoStart` callback and `AutoStartUtil` dependency from HomeScreen)
+
+### Fixed
+- `ScreenshotContentObserver.onChange` return value — returns `true` only when a screenshot is actually detected, `false` otherwise (prevented false-positive triggering of downstream handlers)
+
 ## [0.4.0-alpha] - 2026-06-23
 
 ### Added

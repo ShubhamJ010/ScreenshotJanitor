@@ -26,6 +26,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -45,10 +46,14 @@ import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -95,7 +100,6 @@ fun HomeContent(
     onRequestPermissions: () -> Unit,
     onRequestAllFilesAccess: () -> Unit,
     onRequestDisableBatteryOpt: () -> Unit,
-    onRequestAutoStart: () -> Unit,
     onRunCleanup: () -> Unit,
     onReschedule: (Int, Int) -> Unit,
     onArchive: (String) -> Unit,
@@ -257,12 +261,58 @@ fun HomeContent(
                         hasNotificationPermission = hasNotificationPermission,
                         hasStoragePermission = hasStoragePermission,
                         isAllFilesManager = isAllFilesManager,
-                        isBatteryOptDisabled = isBatteryOptDisabled,
                         onRequestPermissions = onRequestPermissions,
-                        onRequestAllFilesAccess = onRequestAllFilesAccess,
-                        onRequestDisableBatteryOpt = onRequestDisableBatteryOpt,
-                        onRequestAutoStart = onRequestAutoStart
+                        onRequestAllFilesAccess = onRequestAllFilesAccess
                     )
+                }
+            }
+        }
+
+        // ── Background Protection card ──────────────────────────────────────
+        if (!isBatteryOptDisabled) {
+            item(key = "background_card") {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    ),
+                    shape = RoundedCornerShape(28.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            Text(
+                                text = "Background Protection",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                        Text(
+                            text = "Prevent the system from stopping screenshot detection.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.9f)
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(onClick = onRequestDisableBatteryOpt) {
+                                Text("Battery Usage", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
                 }
             }
         }
