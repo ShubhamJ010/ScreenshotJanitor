@@ -18,6 +18,21 @@
 
 ssJanitor monitors newly created screenshots, lets you archive or delete them through lightweight notifications, and automatically cleans up unarchived screenshots on a schedule. Intentionally lightweight, battery-friendly, and aligned with modern Android storage and background execution policies.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td><img src="screenshots/Screenshot_2026-06-24-00-04-41-34_9bfa694f76ba0ec3b1e69f570e4bca5a.jpg" width="200" alt="Screenshot 1"/></td>
+    <td><img src="screenshots/Screenshot_2026-06-24-00-04-52-20_9bfa694f76ba0ec3b1e69f570e4bca5a.jpg" width="200" alt="Screenshot 2"/></td>
+    <td><img src="screenshots/Screenshot_2026-06-24-00-05-02-23_9bfa694f76ba0ec3b1e69f570e4bca5a.jpg" width="200" alt="Screenshot 3"/></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/Screenshot_2026-06-24-00-05-09-40_9bfa694f76ba0ec3b1e69f570e4bca5a.jpg" width="200" alt="Screenshot 4"/></td>
+    <td><img src="screenshots/Screenshot_2026-06-24-00-05-26-67_9bfa694f76ba0ec3b1e69f570e4bca5a.jpg" width="200" alt="Screenshot 5"/></td>
+    <td><img src="screenshots/Screenshot_2026-06-24-00-05-35-14_9bfa694f76ba0ec3b1e69f570e4bca5a.jpg" width="200" alt="Screenshot 6"/></td>
+  </tr>
+</table>
+
 ## Features
 
 - **Screenshot Detection** — Detects new screenshots via MediaStore and ContentObserver. No polling.
