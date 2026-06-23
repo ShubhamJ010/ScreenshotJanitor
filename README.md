@@ -62,6 +62,14 @@ ssJanitor monitors newly created screenshots, lets you archive or delete them th
 
 No API keys, no cloud services, no configuration required.
 
+## Install with Obtainium
+
+Easily receive updates directly from GitHub Releases using [Obtainium](https://github.com/ImranR98/Obtainium).
+
+[![Get it on Obtainium](https://img.shields.io/badge/Obtainium-Add%20App-blue)](https://obtainium.imranr.dev/redirect.html?r=github.com/ShubhamJ010/ScreenshotJanitor)
+
+If Obtainium is installed on your device, tapping the badge will import this app automatically.
+
 ## Permissions
 
 ```xml
