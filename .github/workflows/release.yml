@@ -5,6 +5,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,11 +28,22 @@ jobs:
       - name: Build Release APK
         run: ./gradlew assembleRelease --build-cache --parallel
 
+      - name: Extract changelog section
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          awk -v ver="$VERSION" '
+            $0 ~ "^## \\[" ver "\\]" { found=1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md > release_body.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
+          body_path: release_body.md
           draft: false
           prerelease: true
           files: app/build/outputs/apk/release/app-release.apk

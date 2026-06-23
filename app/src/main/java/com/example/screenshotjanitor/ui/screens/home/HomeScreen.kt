@@ -83,6 +83,13 @@ fun HomeScreen(
         )
     }
 
+    var isBatteryOptDisabled by remember {
+        mutableStateOf(
+            (context.getSystemService(android.content.Context.POWER_SERVICE) as? android.os.PowerManager)
+                ?.isIgnoringBatteryOptimizations(context.packageName) == true
+        )
+    }
+
     // ── Reconciliation ───────────────────────────────────────────────────────
     LaunchedEffect(Unit) {
         viewModel.reconcileDatabase(context)
@@ -97,6 +104,9 @@ fun HomeScreen(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     isAllFilesManager = android.os.Environment.isExternalStorageManager()
                 }
+                isBatteryOptDisabled =
+                    (context.getSystemService(android.content.Context.POWER_SERVICE) as? android.os.PowerManager)
+                        ?.isIgnoringBatteryOptimizations(context.packageName) == true
             }
         })
     }
@@ -133,6 +143,14 @@ fun HomeScreen(
         }
         hasStoragePermission =
             permissions[Manifest.permission.READ_MEDIA_IMAGES] ?: hasStoragePermission
+    }
+
+    val batteryOptLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        isBatteryOptDisabled =
+            (context.getSystemService(android.content.Context.POWER_SERVICE) as? android.os.PowerManager)
+                ?.isIgnoringBatteryOptimizations(context.packageName) == true
     }
 
     // ── Scroll-aware TopAppBar ────────────────────────────────────────────────
@@ -191,6 +209,7 @@ fun HomeScreen(
             hasNotificationPermission = hasNotificationPermission,
             hasStoragePermission = hasStoragePermission,
             isAllFilesManager = isAllFilesManager,
+            isBatteryOptDisabled = isBatteryOptDisabled,
             onRequestPermissions = {
                 val list = mutableListOf<String>()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission) {
@@ -211,6 +230,15 @@ fun HomeScreen(
                     context.startActivity(intent)
                 }
             },
+            onRequestDisableBatteryOpt = {
+                val intent = android.content.Intent(
+                    android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+                ).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                }
+                batteryOptLauncher.launch(intent)
+            },
+            onRequestAutoStart = { com.example.screenshotjanitor.core.constants.AutoStartUtil.openAutoStartSettings(context) },
             onRunCleanup = { viewModel.runCleanupNow(context) },
             onReschedule = { hour, minute -> viewModel.rescheduleCleanup(hour, minute, context) },
             onArchive = { viewModel.archiveScreenshot(it) },

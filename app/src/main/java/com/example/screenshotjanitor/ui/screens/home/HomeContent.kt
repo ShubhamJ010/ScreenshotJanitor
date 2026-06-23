@@ -91,8 +91,11 @@ fun HomeContent(
     hasNotificationPermission: Boolean,
     hasStoragePermission: Boolean,
     isAllFilesManager: Boolean,
+    isBatteryOptDisabled: Boolean,
     onRequestPermissions: () -> Unit,
     onRequestAllFilesAccess: () -> Unit,
+    onRequestDisableBatteryOpt: () -> Unit,
+    onRequestAutoStart: () -> Unit,
     onRunCleanup: () -> Unit,
     onReschedule: (Int, Int) -> Unit,
     onArchive: (String) -> Unit,
@@ -231,7 +234,7 @@ fun HomeContent(
     ) {
 
         // ── Permission warning ────────────────────────────────────────────────
-        if (!hasNotificationPermission || !hasStoragePermission || !isAllFilesManager) {
+        if (!hasNotificationPermission || !hasStoragePermission || !isAllFilesManager || !isBatteryOptDisabled) {
             item(key = "permission_card") {
                 AnimatedVisibility(
                     visible = true,
@@ -254,8 +257,11 @@ fun HomeContent(
                         hasNotificationPermission = hasNotificationPermission,
                         hasStoragePermission = hasStoragePermission,
                         isAllFilesManager = isAllFilesManager,
+                        isBatteryOptDisabled = isBatteryOptDisabled,
                         onRequestPermissions = onRequestPermissions,
-                        onRequestAllFilesAccess = onRequestAllFilesAccess
+                        onRequestAllFilesAccess = onRequestAllFilesAccess,
+                        onRequestDisableBatteryOpt = onRequestDisableBatteryOpt,
+                        onRequestAutoStart = onRequestAutoStart
                     )
                 }
             }
@@ -406,7 +412,8 @@ fun HomeContent(
             if (pendingList.isEmpty() && achievedList.isEmpty() && keptList.isNotEmpty() && !showKept) {
                 item(key = "empty_active_state") {
                     EmptyStateView(
-                        message = "No active screenshots. Pull up to show kept.",
+                        message = "No active screenshots",
+                        subtitle = "Pull up to show ${keptList.size} kept",
                         icon = Icons.Default.HourglassEmpty,
                         modifier = Modifier
                             .fillMaxWidth()

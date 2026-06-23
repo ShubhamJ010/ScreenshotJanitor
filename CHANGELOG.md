@@ -10,12 +10,21 @@
 - `goAsync()`/`pendingResult.finish()` pattern in `BootReceiver` and `NotificationActionReceiver` for proper BroadcastReceiver lifecycle
 - `contentObserver` reference on `SsJanitorApp` to enable cleanup worker to reset dedup state
 - `notificationManager` lifecycle management in `ScreenshotDetectionService` (dismiss on destroy)
+- `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` permission declaration for battery optimization opt-out
+- Battery optimization check with re-evaluation on lifecycle resume
+- `AutoStartUtil` — OEM-specific auto-start settings intents (Xiaomi, Huawei, OPPO, vivo, OnePlus, Samsung)
+- `EmptyStateView` subtitle parameter for multi-line empty state messages
 
 ### Changed
 - Switched `SsJanitorApp` database/repository/settings from `lateinit` to `by lazy` for thread-safe initialization
 - Refactored `ScreenshotDetectionService.onCreate()` to start foreground in `onCreate` (moved out of helper method)
 - Simplified `ScreenshotCleanupWorker` — removed dead `autoDelete = true` branch; always deletes archived screenshots
 - Shared single `CoroutineScope(Dispatchers.IO)` in `ScreenshotContentObserver` instead of creating per-screenshot scopes
+- `BootReceiver` `exported` attribute set to `true` for reliable `BOOT_COMPLETED` delivery on modern Android
+- Permission warning card now includes "No Kill" and "Auto Start" action buttons
+- Empty state message split into separate lines with kept count subtitle
+- Animated stats grid entrance and extracted auto-archive badge
+- Tracked file size for screenshots with freed-up bytes display
 
 ### Removed
 - All `Log.d`/`Log.e`/`Log.w` statements across the codebase (production code cleanup)
