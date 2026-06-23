@@ -135,9 +135,6 @@ fun HomeScreen(
             permissions[Manifest.permission.READ_MEDIA_IMAGES] ?: hasStoragePermission
     }
 
-    // ── Filter state ─────────────────────────────────────────────────────────
-    var selectedFilter by remember { mutableStateOf(ScreenshotFilter.ALL) }
-
     // ── Scroll-aware TopAppBar ────────────────────────────────────────────────
     val topAppBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState)
@@ -194,8 +191,6 @@ fun HomeScreen(
             hasNotificationPermission = hasNotificationPermission,
             hasStoragePermission = hasStoragePermission,
             isAllFilesManager = isAllFilesManager,
-            selectedFilter = selectedFilter,
-            onFilterSelected = { selectedFilter = it },
             onRequestPermissions = {
                 val list = mutableListOf<String>()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission) {

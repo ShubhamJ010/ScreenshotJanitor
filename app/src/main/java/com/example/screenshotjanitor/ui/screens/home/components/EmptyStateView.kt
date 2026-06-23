@@ -4,13 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Archive
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -19,19 +15,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.screenshotjanitor.ui.screens.home.ScreenshotFilter
 
 @Composable
-fun EmptyStateView(filter: ScreenshotFilter, modifier: Modifier = Modifier) {
-    val (icon, message) = when (filter) {
-        ScreenshotFilter.ALL -> Icons.Default.Image to "No screenshots being tracked yet."
-        ScreenshotFilter.PENDING -> Icons.Default.HourglassEmpty to "No pending screenshots."
-        ScreenshotFilter.ARCHIVED -> Icons.Default.Archive to "No archived screenshots."
-        ScreenshotFilter.KEPT -> Icons.Default.Bookmark to "No kept screenshots."
-    }
-
+fun EmptyStateView(
+    message: String = "No screenshots being tracked yet.",
+    icon: ImageVector = Icons.Default.Image,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,

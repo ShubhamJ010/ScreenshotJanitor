@@ -34,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.screenshotjanitor.data.db.entity.ScreenshotEntity
-import com.example.screenshotjanitor.ui.screens.home.ScreenshotFilter
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -92,24 +91,18 @@ fun ScreenshotCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    // Status badge & quick actions
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        val status = when {
-                            screenshot.kept -> ScreenshotFilter.KEPT
-                            screenshot.archived -> ScreenshotFilter.ARCHIVED
-                            else -> ScreenshotFilter.PENDING
-                        }
-                        val badgeData = when (status) {
-                            ScreenshotFilter.KEPT -> Triple(
+                        val badgeData = when {
+                            screenshot.kept -> Triple(
                                 MaterialTheme.colorScheme.primaryContainer,
                                 Icons.Default.Bookmark,
                                 "Kept"
                             )
 
-                            ScreenshotFilter.ARCHIVED -> Triple(
+                            screenshot.archived -> Triple(
                                 MaterialTheme.colorScheme.tertiaryContainer,
                                 Icons.Default.Archive,
                                 "Archived"
