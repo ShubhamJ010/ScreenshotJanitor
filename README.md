@@ -35,9 +35,10 @@ ssJanitor monitors newly created screenshots, lets you archive or delete them th
 
 ## Features
 
-- **Screenshot Detection** — Detects new screenshots via MediaStore and ContentObserver. No polling.
+- **Screenshot Detection** — URI-based detection via MediaStore ContentObserver with cold-start initial scan, exponential-backoff retry, `IS_PENDING` column filtering, and fallback scan for edge cases.
 - **Action Notifications** — Archive, Keep, or Delete from a dismissible notification.
 - **Auto-Archive Mode** — Long-press the Archived card to auto-archive every new screenshot by default.
+- **Battery Optimization Opt-Out** — Dedicated card with one-tap "Battery Usage" button to disable battery optimization.
 - **Automatic Cleanup** — WorkManager-based daily cleanup removes archived screenshots.
 
 [Detailed feature docs →](docs/features.md)
@@ -76,11 +77,13 @@ If Obtainium is installed on your device, tapping the badge will import this app
 <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 ```
 
 - `READ_MEDIA_IMAGES` — Required to query screenshots from MediaStore.
 - `POST_NOTIFICATIONS` — Required for screenshot action notifications.
 - `MANAGE_EXTERNAL_STORAGE` — Required for batch deletion of archived screenshots.
+- `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` — Required to opt out of battery optimization for reliable background detection.
 
 ## Project Structure
 

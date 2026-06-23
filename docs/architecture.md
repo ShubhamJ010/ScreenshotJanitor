@@ -13,16 +13,22 @@ flowchart
     E[Room Database]
     F[ScreenshotDetector]
     G[ScreenshotNotificationManager]
-    H[NotificationActionReceiver]
+    I[ScreenshotDetectionService]
+    J[BootReceiver]
+    K[NotificationActionReceiver]
+    L[SsJanitorApp]
 
     A <--> B
     B <--> C
     C <--> D
     C <--> E
     D <--> E
+    L --> I
+    I --> F
+    J --> I
     F --> E
     F --> G
-    G --> H
+    G --> K
 ```
 
 ## Layers
@@ -37,18 +43,26 @@ flowchart
 - **SettingsRepository** — Manages preferences (auto-archive toggle) via DataStore.
 
 ### Background & System
-- **ScreenshotDetector** — `ContentObserver` registered on `MediaStore.Images.Media.EXTERNAL_CONTENT_URI`. Filters new images by screenshot naming conventions.
+- **SsJanitorApp** — Application class holding shared references (database, repository, contentObserver) initialized via `by lazy` for thread safety.
+- **ScreenshotDetectionService** — Foreground service that hosts `ScreenshotDetector`, keeping the process alive for reliable MediaStore observation.
+- **BootReceiver** — `BroadcastReceiver` for `BOOT_COMPLETED` that restarts the detection service after device reboot.
+- **ScreenshotDetector** — Wraps `ScreenshotContentObserver`, registered on `MediaStore.Images.Media.EXTERNAL_CONTENT_URI`. Filters new images by screenshot naming conventions.
+- **ScreenshotContentObserver** — URI-based detection with `IS_PENDING` column filtering, exponential-backoff retry (~10.3s window), `performInitialScan()` on cold start, and `scanLatestScreenshots()` fallback for edge cases.
 - **ScreenshotNotificationManager** — Creates notifications with action buttons.
-- **NotificationActionReceiver** — `BroadcastReceiver` handling Keep/Archive/Delete actions.
+- **NotificationActionReceiver** — `BroadcastReceiver` handling Keep/Archive/Delete actions with proper `goAsync()` lifecycle.
 - **ScreenshotCleanupWorker** — Periodic `WorkManager` task deleting archived screenshots.
 
 ## Key Processes
 
 ### Screenshot Detection
-1. `ContentObserver` detects a MediaStore change.
-2. Queries the latest image and checks if it's a screenshot (name/path heuristics).
-3. Records the entry in Room.
-4. Shows a notification with Archive/Keep/Delete actions.
+1. `BootReceiver` restarts `ScreenshotDetectionService` after device boot.
+2. `ScreenshotDetectionService` starts as a foreground service and registers `ScreenshotContentObserver`.
+3. `performInitialScan()` immediately scans the last 30 seconds of MediaStore to catch screenshots taken during the app startup window.
+4. On a MediaStore change, the observer queries by content URI ID (not latest-image scan) with `IS_PENDING` and blank-column checks.
+5. If the URI row is not yet indexed by MediaStore (cold-start race), retries with exponential backoff (200ms → 2s × 3) for up to ~10.3s.
+6. If URI-based retries are exhausted, falls back to `scanLatestScreenshots()` (last 60 seconds).
+7. On successful detection, calls `handleNewScreenshot` (suspend function) to insert into Room and show a notification.
+8. URI deduplication is managed via synchronized sets with 200-entry cap and oldest-25% eviction.
 
 ### Cleanup
 1. `WorkManager` triggers the daily worker.
@@ -64,6 +78,6 @@ flowchart
 
 - Tiny APK size
 - Minimal memory usage
-- Battery efficient — no polling, no foreground services
+- Battery efficient — no polling, foreground service uses minimal uptime
 - Android-native behavior
 - No cloud, no analytics, no accounts

@@ -13,7 +13,7 @@
 | Area | Target |
 |---|---|
 | Memory | Minimal background usage, no permanent daemon processes |
-| Battery | No filesystem polling, no foreground services, WorkManager-only scheduled tasks |
+| Battery | No filesystem polling, lightweight foreground service with minimal uptime, WorkManager for scheduled tasks |
 | Startup | Fast cold startup, lightweight dependency graph |
 
 ## Android Version Support
@@ -24,11 +24,13 @@
 ## MVP Scope (v1.0)
 
 ### Included
-- Screenshot detection via ContentObserver
+- Screenshot detection via ContentObserver with URI-based querying, cold-start scan, retry logic, and `IS_PENDING` filtering
+- Foreground detection service (ScreenshotDetectionService) with BootReceiver for reboot recovery
 - Action notifications (Archive, Keep, Delete)
 - Archive system (Room-based metadata)
 - Auto-Archive mode (long-press toggle)
 - Daily cleanup worker (WorkManager)
+- Battery optimization opt-out card
 - Settings screen
 - History screen
 

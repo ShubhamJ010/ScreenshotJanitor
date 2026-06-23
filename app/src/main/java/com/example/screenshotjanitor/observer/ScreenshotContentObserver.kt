@@ -17,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.SupervisorJob
 import java.util.Collections
 
 class ScreenshotContentObserver(
@@ -31,7 +32,7 @@ class ScreenshotContentObserver(
 
     private val processedUris = Collections.synchronizedSet(mutableSetOf<String>())
     private val pendingUris = Collections.synchronizedSet(mutableSetOf<String>())
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     companion object {
         private const val TAG = "ScreenshotObserver"
@@ -68,7 +69,6 @@ class ScreenshotContentObserver(
      */
     fun performInitialScan() {
         scope.launch {
-            Log.d(TAG, "Performing initial scan for recent screenshots")
             scanLatestScreenshots(INITIAL_SCAN_WINDOW_SECONDS)
         }
     }
@@ -86,7 +86,6 @@ class ScreenshotContentObserver(
 
     override fun onChange(selfChange: Boolean, uri: Uri?) {
         super.onChange(selfChange, uri)
-        Log.d(TAG, "onChange fired: uri=$uri")
 
         if (uri == null) {
             // No specific URI — fall back to scanning latest images.
@@ -97,7 +96,6 @@ class ScreenshotContentObserver(
         val id = try {
             ContentUris.parseId(uri)
         } catch (_: NumberFormatException) {
-            Log.w(TAG, "Could not parse ID from uri=$uri, falling back to scan")
             scope.launch { scanLatestScreenshots(FALLBACK_SCAN_WINDOW_SECONDS) }
             return
         }
@@ -107,7 +105,6 @@ class ScreenshotContentObserver(
         // Atomic check-and-add to prevent duplicate processing.
         synchronized(processedUris) {
             if (uriString in processedUris || uriString in pendingUris) {
-                Log.d(TAG, "Already processed/pending, skipping: $uriString")
                 return
             }
             pendingUris.add(uriString)
@@ -117,11 +114,9 @@ class ScreenshotContentObserver(
             val detected = queryByIdWithRetry(id)
             if (detected) {
                 addToProcessed(uriString)
-                Log.d(TAG, "Successfully detected screenshot via URI: $uriString")
             } else {
                 // Fallback: scan recent images in case MediaStore was slow to
                 // populate the row columns (common on cold start).
-                Log.w(TAG, "URI-based detection failed for id=$id, falling back to scan")
                 scanLatestScreenshots(FALLBACK_SCAN_WINDOW_SECONDS)
             }
             synchronized(pendingUris) { pendingUris.remove(uriString) }
@@ -134,19 +129,9 @@ class ScreenshotContentObserver(
 
     private suspend fun queryByIdWithRetry(id: Long): Boolean {
         for ((attempt, delayMs) in RETRY_DELAYS_MS.withIndex()) {
-            if (queryById(id)) {
-                Log.d(TAG, "queryById succeeded on attempt ${attempt + 1}")
-                return true
-            }
-            Log.d(TAG, "queryById attempt ${attempt + 1} failed, waiting ${delayMs}ms")
+            if (queryById(id)) return true
             delay(delayMs)
         }
-        // One final attempt after the last delay.
-        if (queryById(id)) {
-            Log.d(TAG, "queryById succeeded on final attempt")
-            return true
-        }
-        Log.w(TAG, "queryById failed after ${RETRY_DELAYS_MS.size + 1} attempts")
         return false
     }
 
@@ -195,13 +180,11 @@ class ScreenshotContentObserver(
                     }
 
                     if (isPending) {
-                        Log.d(TAG, "queryById: id=$id is IS_PENDING, will retry")
                         return false
                     }
 
                     // Columns not yet populated — MediaStore is still indexing.
                     if (displayName.isBlank() || relativePath.isBlank()) {
-                        Log.d(TAG, "queryById: id=$id has empty columns (name='$displayName', path='$relativePath'), will retry")
                         return false
                     }
 
@@ -217,7 +200,6 @@ class ScreenshotContentObserver(
                     }
 
                     // Row is fully populated but not a screenshot — stop retrying.
-                    Log.d(TAG, "queryById: id=$id is not a screenshot (name='$displayName', path='$relativePath')")
                     return true
                 }
                 // Row doesn't exist yet — retry.
@@ -295,7 +277,6 @@ class ScreenshotContentObserver(
                         pendingUris.add(uriString)
                     }
 
-                    Log.d(TAG, "scanLatest: found screenshot: $uriString")
                     handleNewScreenshot(uriString, displayName, dateAdded)
                     addToProcessed(uriString)
                     synchronized(pendingUris) { pendingUris.remove(uriString) }
@@ -319,7 +300,6 @@ class ScreenshotContentObserver(
     private suspend fun handleNewScreenshot(uriString: String, fileName: String, createdAt: Long) {
         val existing = repository.getScreenshotByUri(uriString)
         if (existing != null) {
-            Log.d(TAG, "handleNewScreenshot: already in DB, skipping: $uriString")
             return
         }
 
@@ -343,7 +323,6 @@ class ScreenshotContentObserver(
         )
         repository.insertScreenshot(entity)
         notificationManager.showScreenshotNotification(uriString, isAutoArchive)
-        Log.d(TAG, "handleNewScreenshot: inserted and notified for $uriString")
     }
 
     // ---------------------------------------------------------------------
