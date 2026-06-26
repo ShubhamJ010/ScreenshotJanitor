@@ -38,7 +38,7 @@ ssJanitor monitors newly created screenshots, lets you archive or delete them th
   </tr>
   <tr>
     <td><img src="screenshots/Screenshot_2026-06-24-00-05-09-40_9bfa694f76ba0ec3b1e69f570e4bca5a.jpg" width="200" alt="Screenshot 4"/></td>
-    <td><img src="screenshots/Screenshot_2026-06-24-00-05-26-67_9bfa694f76ba0ec3b1e69f570e4bca5a.jpg" width="200" alt="Screenshot 5"/></td>
+    <td><img src="screenshots/1000134435.jpg" width="200" alt="Screenshot 5"/></td>
     <td><img src="screenshots/Screenshot_2026-06-24-00-05-35-14_9bfa694f76ba0ec3b1e69f570e4bca5a.jpg" width="200" alt="Screenshot 6"/></td>
   </tr>
 </table>
