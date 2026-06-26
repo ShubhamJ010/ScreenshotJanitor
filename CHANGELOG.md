@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.5.0-alpha] - 2026-06-26
+
+### Added
+- **Pull-to-reveal kept screenshots gesture** — New `NestedScrollPullToRevealState` + `PullToKeptIndicator` composable for swipe-down gesture to reveal kept screenshot section
+- **`KeptScreenshotsSection`** — Dedicated section composable to display kept screenshots pulled down from the gesture
+- **`PermissionWarningSection`** — Extracted permission warnings from `HomeContent` into its own composable for cleaner delegation
+- **`SectionHeader`** — Reusable header composable for home screen sections
+- **`EmptyStateView`** — New animated empty state with entrance transition (opacity + slide-in)
+
+### Changed
+- **Refactored home screen package structure** — Moved components into organized subpackages: `common/`, `screenshot/`, `stats/`, `permissions/`, `gesture/`
+- **Simplified `HomeContent`** — ~540 lines reduced to ~55 lines by delegating to extracted composables (`EmptyStateView`, `StatsGrid`, `KeptScreenshotsSection`, `PermissionWarningSection`, `NextCleanupBanner`)
+- **`StatsGrid` redesigned** — "Last cleared" card now shows relative time (e.g. "2h ago") with elapsed counter, compact layout, and auto-archive badge; added days-since counters for total and daily cleanup stats
+- **Animation polish** — Empty state fade-in/slide-up entrance animation; auto-archive badge entrance animation
+- **`ScreenshotContentObserver`** — Removed dead `AutoStartUtil` dependency and unused retry constants
+- **Documentation** — Synced `README`, `docs/architecture.md`, `docs/features.md`, `docs/development.md` with 0.4.x changelog and removed stale `AutoStartUtil` references
+
+### Removed
+- **`AutoStartUtil`** — Removed OEM-specific auto-start settings intents (Xiaomi, Huawei, OPPO, vivo, OnePlus, Samsung) and all related permission request callbacks
+- **Old `components/` directory** — Replaced by `common/`, `screenshot/`, `stats/`, `permissions/`, `gesture/` subpackages
+
 ## [0.4.2-alpha] - 2026-06-24
 
 ### Fixed
