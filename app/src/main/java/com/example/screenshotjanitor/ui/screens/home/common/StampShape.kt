@@ -1,4 +1,4 @@
-package com.example.screenshotjanitor.ui.screens.home.components
+package com.example.screenshotjanitor.ui.screens.home.common
 
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Outline

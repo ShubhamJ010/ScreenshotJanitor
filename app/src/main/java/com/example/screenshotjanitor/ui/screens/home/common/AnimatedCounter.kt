@@ -1,4 +1,4 @@
-package com.example.screenshotjanitor.ui.screens.home.components
+package com.example.screenshotjanitor.ui.screens.home.common
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring

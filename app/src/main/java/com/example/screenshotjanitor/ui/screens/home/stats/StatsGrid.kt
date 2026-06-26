@@ -1,4 +1,4 @@
-package com.example.screenshotjanitor.ui.screens.home.components
+package com.example.screenshotjanitor.ui.screens.home.stats
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
@@ -41,6 +41,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.screenshotjanitor.ui.screens.home.common.AnimatedCounter
+import com.example.screenshotjanitor.ui.screens.home.common.StampShape
 import com.example.screenshotjanitor.viewmodel.HomeUiState
 
 import kotlinx.coroutines.delay

@@ -1,4 +1,4 @@
-package com.example.screenshotjanitor.ui.screens.home.components
+package com.example.screenshotjanitor.ui.screens.home.common
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing

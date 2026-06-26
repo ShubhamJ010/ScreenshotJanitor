@@ -1,4 +1,4 @@
-package com.example.screenshotjanitor.ui.screens.home.components
+package com.example.screenshotjanitor.ui.screens.home.permissions
 
 import android.os.Build
 import androidx.compose.foundation.layout.Arrangement

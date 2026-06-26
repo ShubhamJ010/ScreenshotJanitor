@@ -1,4 +1,4 @@
-package com.example.screenshotjanitor.ui.screens.home.components
+package com.example.screenshotjanitor.ui.screens.home.screenshot
 
 import android.graphics.Bitmap
 import android.net.Uri
