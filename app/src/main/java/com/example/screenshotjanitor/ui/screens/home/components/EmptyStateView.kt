@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -30,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -49,7 +49,7 @@ private data class GlyphSpec(
     val rotationDegrees: Float,
     val baseHorizontalOffsetDp: Float,
     val verticalOffsetDp: Float,
-    val mass: Float,
+    val sizeFactor: Float,
     val noisePhase: Float,
     val noiseAmplitude: Float
 )
@@ -61,7 +61,7 @@ private val glyphSpecs = listOf(
         rotationDegrees = 3f,
         baseHorizontalOffsetDp = -20f,
         verticalOffsetDp = 45f,
-        mass = 0.85f,
+        sizeFactor = 0.85f,
         noisePhase = 0f,
         noiseAmplitude = 12f
     ),
@@ -71,7 +71,7 @@ private val glyphSpecs = listOf(
         rotationDegrees = -2.5f,
         baseHorizontalOffsetDp = 18f,
         verticalOffsetDp = 55f,
-        mass = 1.1f,
+        sizeFactor = 1.1f,
         noisePhase = 1.3f,
         noiseAmplitude = 14f
     ),
@@ -81,7 +81,7 @@ private val glyphSpecs = listOf(
         rotationDegrees = 4f,
         baseHorizontalOffsetDp = -7f,
         verticalOffsetDp = 60f,
-        mass = 0.95f,
+        sizeFactor = 0.95f,
         noisePhase = 2.7f,
         noiseAmplitude = 10f
     ),
@@ -91,7 +91,7 @@ private val glyphSpecs = listOf(
         rotationDegrees = -3f,
         baseHorizontalOffsetDp = 22f,
         verticalOffsetDp = 68f,
-        mass = 0.7f,
+        sizeFactor = 0.7f,
         noisePhase = 4.1f,
         noiseAmplitude = 16f
     ),
@@ -101,7 +101,7 @@ private val glyphSpecs = listOf(
         rotationDegrees = 2f,
         baseHorizontalOffsetDp = 1f,
         verticalOffsetDp = 50f,
-        mass = 1.2f,
+        sizeFactor = 1.2f,
         noisePhase = 5.5f,
         noiseAmplitude = 8f
     )
@@ -232,26 +232,14 @@ private fun ArchiveBoxAnimation(modifier: Modifier = Modifier) {
             val state = glyphStates[index]
 
             val glyphColor = when {
-                spec.accentColor && index == 0 -> {
-                    val p = state.colorProgress.value
-                    Color(
-                        red = containerColor.red + (primaryColor.red - containerColor.red) * p,
-                        green = containerColor.green + (primaryColor.green - containerColor.green) * p,
-                        blue = containerColor.blue + (primaryColor.blue - containerColor.blue) * p
-                    )
-                }
-                spec.accentColor && index == 3 -> {
-                    val p = state.colorProgress.value
-                    Color(
-                        red = containerColor.red + (tertiaryColor.red - containerColor.red) * p,
-                        green = containerColor.green + (tertiaryColor.green - containerColor.green) * p,
-                        blue = containerColor.blue + (tertiaryColor.blue - containerColor.blue) * p
-                    )
-                }
+                spec.accentColor && index == 0 ->
+                    lerp(containerColor, primaryColor, state.colorProgress.value)
+                spec.accentColor && index == 3 ->
+                    lerp(containerColor, tertiaryColor, state.colorProgress.value)
                 else -> outlineColor
             }
 
-            val glyphSize = (26f * spec.mass + 4f).dp
+            val glyphSize = (26f * spec.sizeFactor + 4f).dp
 
             Icon(
                 imageVector = spec.icon,
@@ -303,7 +291,6 @@ private fun ArchiveBoxAnimation(modifier: Modifier = Modifier) {
 fun EmptyStateView(
     message: String = "No screenshots yet",
     subtitle: String? = null,
-    @Suppress("UNUSED_PARAMETER") icon: ImageVector = Icons.Default.Image,
     modifier: Modifier = Modifier
 ) {
     Column(

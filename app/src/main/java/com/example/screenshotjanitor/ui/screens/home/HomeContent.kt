@@ -462,7 +462,6 @@ fun HomeContent(
                     EmptyStateView(
                         message = "No active screenshots",
                         subtitle = "Pull up to show ${keptList.size} kept",
-                        icon = Icons.Default.HourglassEmpty,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 24.dp)
