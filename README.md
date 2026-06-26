@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="app/src/main/res/drawable/ic_launcher_foreground.xml" alt="ssJanitor" width="96" height="96"/>
+  <img src="screenshots/app_icon.png" alt="ssJanitor" width="96" height="96"/>
   <h1>ssJanitor</h1>
   <p>Minimal Android 14+ screenshot management utility</p>
   <p>
