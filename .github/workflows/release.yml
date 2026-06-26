@@ -64,7 +64,7 @@ jobs:
             exit 1
           fi
           echo "Verifying signature for: $APK_PATH"
-          jarsigner -verify -verbose -certs "$APK_PATH" || true
+          apksigner verify --verbose --print-certs "$APK_PATH"
           echo ""
           echo "APK signature verification complete."
 
