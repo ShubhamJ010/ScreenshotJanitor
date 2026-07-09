@@ -28,6 +28,7 @@ object AppConstants {
     const val PREF_AUTO_ARCHIVE = "pref_auto_archive"
     const val PREF_CLEANUP_HOUR = "pref_cleanup_hour"
     const val PREF_CLEANUP_MINUTE = "pref_cleanup_minute"
+    const val PREF_JANITOR_ENABLED = "pref_janitor_enabled"
 
     // Minutes before the scheduled cleanup that the heads-up reminder fires
     const val PRE_CLEANUP_REMINDER_MINUTES = 30

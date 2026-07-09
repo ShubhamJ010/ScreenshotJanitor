@@ -42,6 +42,9 @@ class HomeViewModel(
     private val _isAutoArchiveEnabled = MutableStateFlow(settingsRepository.isAutoArchiveEnabled())
     val isAutoArchiveEnabled = _isAutoArchiveEnabled.asStateFlow()
 
+    private val _isJanitorEnabled = MutableStateFlow(settingsRepository.isJanitorEnabled())
+    val isJanitorEnabled = _isJanitorEnabled.asStateFlow()
+
     init {
         // Run reconciliation when ViewModel is created (app start)
         // We use a separate context/scope if needed, but viewModelScope is fine.
@@ -92,6 +95,12 @@ class HomeViewModel(
         // We might need to refresh uiState if it doesn't observe settingsRepository
         // Actually uiState map above re-reads it, but it might not trigger on change.
         // For simplicity, we can just rely on isAutoArchiveEnabled flow for UI feedback.
+    }
+
+    fun toggleJanitor() {
+        val newValue = !settingsRepository.isJanitorEnabled()
+        settingsRepository.setJanitorEnabled(newValue)
+        _isJanitorEnabled.value = newValue
     }
 
     val nextCleanupTimeMillis: StateFlow<Long?> = workManager.getWorkInfosForUniqueWorkFlow(AppConstants.WORK_CLEANUP_NAME)

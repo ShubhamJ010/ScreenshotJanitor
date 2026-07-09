@@ -70,6 +70,7 @@ fun NextCleanupBanner(
     timeMillis: Long,
     onRunNow: () -> Unit,
     onReschedule: (Int, Int) -> Unit,
+    isActive: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
@@ -134,7 +135,7 @@ fun NextCleanupBanner(
     val infiniteTransition = rememberInfiniteTransition(label = "squigglyRotation")
     val rotation by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = 360f,
+        targetValue = if (isActive) 360f else 0f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 8000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart

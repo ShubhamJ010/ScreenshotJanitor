@@ -20,13 +20,20 @@ class SsJanitorApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        startDetectionService()
+        if (settingsRepository.isJanitorEnabled()) {
+            startDetectionService()
+        }
         scheduleCleanupWorker()
     }
 
     fun startDetectionService() {
         val intent = Intent(this, ScreenshotDetectionService::class.java)
         startForegroundService(intent)
+    }
+
+    fun stopDetectionService() {
+        val intent = Intent(this, ScreenshotDetectionService::class.java)
+        stopService(intent)
     }
 
     private fun scheduleCleanupWorker() {

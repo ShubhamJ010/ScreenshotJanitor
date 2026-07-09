@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.sj010.ssjanitor.data.db.entity.ScreenshotEntity
@@ -44,7 +45,7 @@ fun ScreenshotCard(
     onArchive: () -> Unit,
     onKeep: () -> Unit,
     onDelete: () -> Unit,
-    onHoldComplete: (String) -> Unit = {},
+    onHoldComplete: (String, Rect) -> Unit = { _, _ -> },
     onRelease: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {

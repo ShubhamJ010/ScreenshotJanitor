@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.Modifier
 import dev.sj010.ssjanitor.data.db.entity.ScreenshotEntity
 import dev.sj010.ssjanitor.ui.screens.home.common.SectionHeader
@@ -28,7 +29,7 @@ fun LazyListScope.keptScreenshotsSection(
     onArchive: (String) -> Unit,
     onKeep: (String) -> Unit,
     onDelete: (String) -> Unit,
-    onHoldComplete: (String) -> Unit = {},
+    onHoldComplete: (String, Rect) -> Unit = { _, _ -> },
     onRelease: () -> Unit = {}
 ) {
     if (!showKept || keptList.isEmpty()) return

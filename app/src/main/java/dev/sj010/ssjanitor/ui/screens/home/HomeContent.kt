@@ -30,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -71,7 +72,9 @@ fun HomeContent(
     onKeep: (String) -> Unit,
     onDelete: (String) -> Unit,
     onToggleAutoArchive: () -> Unit,
-    onHoldComplete: (String) -> Unit = {},
+    isJanitorEnabled: Boolean = true,
+    onToggleJanitor: () -> Unit = {},
+    onHoldComplete: (String, Rect) -> Unit = { _, _ -> },
     onRelease: () -> Unit = {}
 ) {
     val listState = rememberLazyListState()
@@ -153,6 +156,8 @@ fun HomeContent(
                 uiState = uiState,
                 showKept = pullToReveal.showKept,
                 onArchiveLongClick = onToggleAutoArchive,
+                isJanitorEnabled = isJanitorEnabled,
+                onPendingLongClick = onToggleJanitor,
                 onKeptLongClick = {
                     if (pullToReveal.showKept) {
                         if (pendingList.isNotEmpty() || achievedList.isNotEmpty()) {
@@ -174,7 +179,8 @@ fun HomeContent(
                 NextCleanupBanner(
                     timeMillis = nextCleanupTime,
                     onRunNow = onRunCleanup,
-                    onReschedule = onReschedule
+                    onReschedule = onReschedule,
+                    isActive = isJanitorEnabled
                 )
             }
         }

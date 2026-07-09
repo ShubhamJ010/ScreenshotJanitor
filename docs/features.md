@@ -22,11 +22,10 @@ Detect newly created screenshots using `MediaStore` and `ContentObserver`.
 
 Press and hold a screenshot thumbnail to preview it full-screen.
 
-- **Growing Material ring** — while holding, a `CircularProgressIndicator` fills over 1.5s around the thumbnail, and the tile subtly scales up as feedback.
-- **Haptic confirmation** — at 1.5s a `HapticFeedbackType.LongPress` fires via `LocalHapticFeedback`.
-- **Minimal full-screen preview** — opens a borderless, edge-to-edge image on a black background (`ContentScale.Fit`), with system bars hidden for an immersive view. A larger bitmap is loaded via `contentResolver.loadThumbnail`.
-- **Release to close** — lifting the finger (or cancelling the press, e.g. by scrolling) dismisses the preview and resets the ring.
-- **Animated open/close** — the overlay animates in/out with a combined scale + fade transition.
+- **Press-and-hold to preview** — press and hold a thumbnail; an expressive color blur blooms over it the moment the hold starts (a `HapticFeedbackType.LongPress` fires via `LocalHapticFeedback`), and the preview lifts into a floating card.
+- **Floating preview card (M3 container transform)** — the thumbnail's bounds morph into a centred, floating preview card (the screenshot's rectangle) that lifts off the list with a growing shadow to convey a hovering state. System bars stay visible; the card hovers above the app.
+- **Crisp preview** — the preview is decoded at full quality (sampled to the device's screen resolution) so it stays sharp — clearer than the old 2048px thumbnail cap.
+- **Release to close** — lifting the finger (or cancelling the press, e.g. by scrolling) reverses the morph back into the thumbnail.
 - No new permissions required (haptics use `LocalHapticFeedback`).
 
 **Implementation:** `ui/screens/home/screenshot/ScreenshotThumbnail.kt` · `ui/screens/home/screenshot/ScreenshotPreviewOverlay.kt`

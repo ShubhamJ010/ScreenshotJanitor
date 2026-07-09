@@ -3,11 +3,8 @@ package dev.sj010.ssjanitor.ui.screens.home.screenshot
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Size
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,11 +24,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
@@ -45,22 +44,26 @@ import kotlinx.coroutines.withContext
  *
  * While the user holds, a Material progress ring fills over [HOLD_DURATION_MS].
  * On completion it fires a long-press haptic and invokes [onHoldComplete] (the
- * caller opens the full-screen preview). Releasing (or cancelling) the press
- * invokes [onRelease] and resets the ring.
+ * caller opens the full-screen preview, animating out of this tile, along with
+ * this tile's on-screen [Rect]). Releasing (or cancelling) the press invokes
+ * [onRelease] and resets the ring.
+ *
+ * The growing ring is drawn *outside* the image: the image is inset within the
+ * tile and the ring outlines the tile edge, leaving a gap so it never clips the
+ * thumbnail artwork.
  */
 @Composable
 fun ScreenshotThumbnail(
     uriString: String,
     modifier: Modifier = Modifier,
-    onHoldComplete: (String) -> Unit = {},
+    onHoldComplete: (String, Rect) -> Unit = { _, _ -> },
     onRelease: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
-    val progress = remember { Animatable(0f) }
-    var isHolding by remember { mutableStateOf(false) }
     var bitmap by remember(uriString) { mutableStateOf<Bitmap?>(null) }
+    var tileRect by remember { mutableStateOf(Rect.Zero) }
 
     LaunchedEffect(uriString) {
         // Small delay to prevent loading while scrolling fast
@@ -82,28 +85,25 @@ fun ScreenshotThumbnail(
     Box(
         modifier = modifier
             .size(88.dp)
-            .scale(1f + progress.value * 0.05f)
+            .onGloballyPositioned { coordinates ->
+                tileRect = coordinates.boundsInRoot()
+            }
             .pointerInput(uriString) {
                 detectTapGestures(
                     onPress = {
-                        isHolding = true
                         val job = coroutineScope.launch {
-                            progress.snapTo(0f)
-                            progress.animateTo(1f, animationSpec = tween(HOLD_DURATION_MS))
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onHoldComplete(uriString)
+                            onHoldComplete(uriString, tileRect)
                         }
                         tryAwaitRelease()
                         job.cancel()
-                        isHolding = false
-                        progress.snapTo(0f)
                         onRelease()
                     }
                 )
             },
         contentAlignment = Alignment.Center
     ) {
-        // Clipped image / placeholder layer
+        // Squircle thumbnail artwork (the source rect for the preview morph).
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -127,20 +127,6 @@ fun ScreenshotThumbnail(
                 )
             }
         }
-
-        // Growing squircle border: appears on hold and thickens as the hold progresses
-        if (isHolding) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .border(
-                        width = 2.dp + 5.dp * progress.value,
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(20.dp)
-                    )
-            )
-        }
     }
 }
 
-private const val HOLD_DURATION_MS = 900

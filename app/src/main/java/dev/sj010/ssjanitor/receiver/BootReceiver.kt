@@ -11,7 +11,9 @@ class BootReceiver : BroadcastReceiver() {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
             val pendingResult = goAsync()
             val app = context.applicationContext as SsJanitorApp
-            app.startDetectionService()
+            if (app.settingsRepository.isJanitorEnabled()) {
+                app.startDetectionService()
+            }
             pendingResult.finish()
         }
     }

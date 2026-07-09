@@ -34,6 +34,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -43,6 +44,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import dev.sj010.ssjanitor.ui.screens.home.screenshot.ScreenshotPreviewOverlay
+import dev.sj010.ssjanitor.SsJanitorApp
 import dev.sj010.ssjanitor.viewmodel.HomeEvent
 import dev.sj010.ssjanitor.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
@@ -56,6 +58,7 @@ fun HomeScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val nextCleanupTime by viewModel.nextCleanupTimeMillis.collectAsState()
+    val isJanitorEnabled by viewModel.isJanitorEnabled.collectAsState()
 
     var hasNotificationPermission by remember {
         mutableStateOf(
@@ -163,6 +166,9 @@ fun HomeScreen(
 
     // Hold-to-preview: the uri currently shown in the full-screen overlay (null = hidden)
     var previewUri by remember { mutableStateOf<String?>(null) }
+    // The on-screen rect of the thumbnail that triggered the preview, used to
+    // animate the overlay open/close as a Material 3 container transform.
+    var previewRect by remember { mutableStateOf<Rect?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -212,6 +218,21 @@ fun HomeScreen(
             innerPadding = innerPadding,
             uiState = uiState,
             nextCleanupTime = nextCleanupTime,
+            isJanitorEnabled = isJanitorEnabled,
+            onToggleJanitor = {
+                viewModel.toggleJanitor()
+                val app = context.applicationContext as SsJanitorApp
+                if (viewModel.isJanitorEnabled.value) {
+                    app.startDetectionService()
+                } else {
+                    app.stopDetectionService()
+                }
+                scope.launch {
+                    snackbarHostState.showSnackbar(
+                        message = if (viewModel.isJanitorEnabled.value) "Janitor On" else "Janitor Off"
+                    )
+                }
+            },
             hasNotificationPermission = hasNotificationPermission,
             hasStoragePermission = hasStoragePermission,
             isAllFilesManager = isAllFilesManager,
@@ -258,13 +279,14 @@ fun HomeScreen(
                     )
                 }
             },
-            onHoldComplete = { previewUri = it },
+            onHoldComplete = { uri, rect -> previewUri = uri; previewRect = rect },
             onRelease = { previewUri = null }
         )
     }
 
         ScreenshotPreviewOverlay(
             uriString = previewUri,
+            sourceRect = previewRect,
             visible = previewUri != null,
             onDismiss = { previewUri = null }
         )

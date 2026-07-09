@@ -15,6 +15,14 @@ class SettingsRepository(context: Context) {
         prefs.edit { putBoolean(AppConstants.PREF_AUTO_ARCHIVE, enabled) }
     }
 
+    fun isJanitorEnabled(): Boolean {
+        return prefs.getBoolean(AppConstants.PREF_JANITOR_ENABLED, true)
+    }
+
+    fun setJanitorEnabled(enabled: Boolean) {
+        prefs.edit { putBoolean(AppConstants.PREF_JANITOR_ENABLED, enabled) }
+    }
+
     fun getCleanupHour(): Int {
         return prefs.getInt(AppConstants.PREF_CLEANUP_HOUR, AppConstants.DEFAULT_CLEANUP_HOUR)
     }

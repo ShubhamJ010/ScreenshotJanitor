@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.0] - 2026-07-09
+
+### Added
+- **Janitor On/Off toggle** — Long-press the **Pending** stat card to toggle the Janitor background monitor on or off. When off, a Material 3 Expressive red **"OFF" stamp** appears on the Pending card, the background detection service is stopped (the squiggly rotating indicator in **Next Scheduled Cleanup** also freezes), and a snackbar confirms the state. The choice persists across restarts and reboots. Implemented via `HomeViewModel.toggleJanitor()`, `SettingsRepository`, `SsJanitorApp.stopDetectionService()`, the new `OffBadge`, and an `isActive` flag on `NextCleanupBanner`.
+- **Material 3 container-transform hold-to-preview** — Reworked the hold-to-preview gesture into a true Material 3 container transform: an expressive colored blur blooms over the thumbnail the instant the hold starts (with a long-press haptic), and the thumbnail's bounds morph into a floating, centred preview card that lifts off the list with a growing shadow. The preview is decoded at full quality (sampled to the device's screen resolution) so it stays sharp and hovers above the app with the system bars visible. Releasing (or scrolling away) reverses the morph back into the thumbnail. Implemented in `ScreenshotThumbnail`, `ScreenshotCard`, `HomeContent`/`HomeScreen` (rect capture), and the rewritten `ScreenshotPreviewOverlay`.
+
+### Changed
+- **Docs** — Updated `docs/features.md` to describe the new hold-to-preview container transform and remove the old growing-ring animation description.
+
 ## [1.0.1] - 2026-07-09
 
 ### Added

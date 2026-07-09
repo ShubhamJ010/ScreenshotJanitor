@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.HourglassEmpty
@@ -53,7 +54,9 @@ fun StatsGrid(
     showKept: Boolean = false,
     modifier: Modifier = Modifier,
     onArchiveLongClick: () -> Unit = {},
-    onKeptLongClick: () -> Unit = {}
+    onKeptLongClick: () -> Unit = {},
+    isJanitorEnabled: Boolean = true,
+    onPendingLongClick: () -> Unit = {}
 ) {
     val entranceProgress = remember { Animatable(0f) }
 
@@ -80,15 +83,25 @@ fun StatsGrid(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            StatsCard(
-                title = "Pending",
-                value = uiState.pendingCount,
-                delayMs = 0,
-                icon = Icons.Default.HourglassEmpty,
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier.weight(1f)
-            )
+            Box(modifier = Modifier.weight(1f)) {
+                StatsCard(
+                    title = "Pending",
+                    value = uiState.pendingCount,
+                    delayMs = 0,
+                    icon = Icons.Default.HourglassEmpty,
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.fillMaxWidth(),
+                    onLongClick = onPendingLongClick
+                )
+                if (!isJanitorEnabled) {
+                    OffBadge(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .offset(y = 3.dp)
+                    )
+                }
+            }
             Box(modifier = Modifier.weight(1f)) {
                 StatsCard(
                     title = "Archived",
@@ -307,6 +320,83 @@ fun CleanedBadge(
                     text,
                     style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.ExtraBold),
                     color = greenContent,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Material 3 Expressive (M3E) red "OFF" stamp shown on the Pending card when the
+ * Janitor background monitoring is disabled via long-press.
+ */
+@Composable
+fun OffBadge(
+    text: String = "OFF",
+    modifier: Modifier = Modifier
+) {
+    val isDark = isSystemInDarkTheme()
+    val redContainer = if (isDark) Color(0xFFB71C1C) else Color(0xFFE53935)
+    val redContent = if (isDark) Color(0xFFFFCDD2) else Color(0xFFFFFFFF)
+
+    val scale = remember { Animatable(0f) }
+
+    LaunchedEffect(text) {
+        scale.snapTo(0f)
+        scale.animateTo(
+            targetValue = 1.0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            )
+        )
+        delay(80)
+        scale.animateTo(
+            targetValue = 1.3f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMedium
+            )
+        )
+        delay(120)
+        scale.animateTo(
+            targetValue = 1.0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessHigh
+            )
+        )
+    }
+
+    Box(
+        modifier = modifier
+            .graphicsLayer {
+                rotationZ = -10f
+                scaleX = scale.value
+                scaleY = scale.value
+            }
+    ) {
+        Box(
+            modifier = Modifier
+                .clip(StampShape)
+                .background(redContainer)
+                .padding(horizontal = 12.dp, vertical = 6.dp)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Cancel,
+                    contentDescription = null,
+                    tint = redContent,
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(
+                    text,
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.ExtraBold),
+                    color = redContent,
                     fontWeight = FontWeight.Bold
                 )
             }
