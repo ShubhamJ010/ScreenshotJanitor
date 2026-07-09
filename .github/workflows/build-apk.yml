@@ -1,8 +1,10 @@
 name: Build APK
 
-# Lets anyone download a sideloadable APK directly from the pipeline.
-# Triggers on manual dispatch, on pushes to the feature branch, and on PRs.
-# Builds a debug-signed APK (no keystore needed in CI) and uploads it as an artifact.
+# Produces a downloadable, installable test APK for every feature/fix branch push
+# and every PR to main, as standard CI/CD practice (see issue #5).
+# - Uploads the APK as a pipeline artifact (fast download from the run).
+# - Publishes it as an automated pre-release keyed to the source branch/PR,
+#   updated in place so old test builds don't accumulate.
 
 on:
   workflow_dispatch:
@@ -15,7 +17,7 @@ on:
       - "main"
 
 permissions:
-  contents: read
+  contents: write # needed to create/update pre-release tags
 
 jobs:
   build-apk:
@@ -35,9 +37,39 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug --build-cache --parallel
 
+      - name: Determine pre-release tag
+        id: tag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "tag=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+          else
+            SLUG=$(echo "${GITHUB_REF_NAME}" | tr '/' '-' | tr '_' '-')
+            echo "tag=test-${SLUG}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      - name: Publish pre-release test APK
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.tag.outputs.tag }}
+          name: Test build ${{ steps.tag.outputs.tag }}
+          prerelease: true
+          allowUpdates: true
+          removeArtifacts: true
+          artifacts: app/build/outputs/apk/debug/app-debug.apk
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            Automated **debug-signed** test APK for `${{ github.ref_name }}` (${{ github.sha }}).
+
+            Install with "Unknown sources" enabled. CI has no keystore, so this build is
+            debug-signed (same code as release; sideload-only). A release-signed variant
+            can be added later via repo secrets if desired.
+
+            Also downloadable as a pipeline artifact from the same run.
