@@ -27,7 +27,9 @@ fun LazyListScope.keptScreenshotsSection(
     dateFormatter: SimpleDateFormat,
     onArchive: (String) -> Unit,
     onKeep: (String) -> Unit,
-    onDelete: (String) -> Unit
+    onDelete: (String) -> Unit,
+    onHoldComplete: (String) -> Unit = {},
+    onRelease: () -> Unit = {}
 ) {
     if (!showKept || keptList.isEmpty()) return
 
@@ -82,7 +84,9 @@ fun LazyListScope.keptScreenshotsSection(
                     dateFormatter = dateFormatter,
                     onArchive = { onArchive(screenshot.uri) },
                     onKeep = { onKeep(screenshot.uri) },
-                    onDelete = { onDelete(screenshot.uri) }
+                    onDelete = { onDelete(screenshot.uri) },
+                    onHoldComplete = onHoldComplete,
+                    onRelease = onRelease
                 )
             }
         }

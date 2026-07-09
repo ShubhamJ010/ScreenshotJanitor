@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -41,6 +42,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import dev.sj010.ssjanitor.ui.screens.home.screenshot.ScreenshotPreviewOverlay
 import dev.sj010.ssjanitor.viewmodel.HomeEvent
 import dev.sj010.ssjanitor.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
@@ -159,10 +161,14 @@ fun HomeScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    Scaffold(
-        modifier = modifier
-            .fillMaxSize()
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
+    // Hold-to-preview: the uri currently shown in the full-screen overlay (null = hidden)
+    var previewUri by remember { mutableStateOf<String?>(null) }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            modifier = modifier
+                .fillMaxSize()
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             LargeTopAppBar(
@@ -251,7 +257,16 @@ fun HomeScreen(
                         message = if (isEnabled) "Auto-Archive Enabled" else "Auto-Archive Disabled"
                     )
                 }
-            }
+            },
+            onHoldComplete = { previewUri = it },
+            onRelease = { previewUri = null }
+        )
+    }
+
+        ScreenshotPreviewOverlay(
+            uriString = previewUri,
+            visible = previewUri != null,
+            onDismiss = { previewUri = null }
         )
     }
 }

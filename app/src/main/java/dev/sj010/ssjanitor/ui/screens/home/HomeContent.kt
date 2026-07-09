@@ -70,7 +70,9 @@ fun HomeContent(
     onArchive: (String) -> Unit,
     onKeep: (String) -> Unit,
     onDelete: (String) -> Unit,
-    onToggleAutoArchive: () -> Unit
+    onToggleAutoArchive: () -> Unit,
+    onHoldComplete: (String) -> Unit = {},
+    onRelease: () -> Unit = {}
 ) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -253,6 +255,8 @@ fun HomeContent(
                         onArchive = { onArchive(screenshot.uri) },
                         onKeep = { onKeep(screenshot.uri) },
                         onDelete = { onDelete(screenshot.uri) },
+                        onHoldComplete = onHoldComplete,
+                        onRelease = onRelease,
                         modifier = Modifier.animateItem()
                     )
                 }
@@ -280,6 +284,8 @@ fun HomeContent(
                         onArchive = { onArchive(screenshot.uri) },
                         onKeep = { onKeep(screenshot.uri) },
                         onDelete = { onDelete(screenshot.uri) },
+                        onHoldComplete = onHoldComplete,
+                        onRelease = onRelease,
                         modifier = Modifier.animateItem()
                     )
                 }
@@ -306,7 +312,9 @@ fun HomeContent(
                 dateFormatter = dateFormatter,
                 onArchive = onArchive,
                 onKeep = onKeep,
-                onDelete = onDelete
+                onDelete = onDelete,
+                onHoldComplete = onHoldComplete,
+                onRelease = onRelease
             )
 
             // ── Pull to Kept Indicator ──────────────────────────────────────

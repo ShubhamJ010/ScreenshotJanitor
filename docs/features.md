@@ -18,6 +18,21 @@ Detect newly created screenshots using `MediaStore` and `ContentObserver`.
 
 ---
 
+## Hold-to-Preview Thumbnails
+
+Press and hold a screenshot thumbnail to preview it full-screen.
+
+- **Growing Material ring** — while holding, a `CircularProgressIndicator` fills over 1.5s around the thumbnail, and the tile subtly scales up as feedback.
+- **Haptic confirmation** — at 1.5s a `HapticFeedbackType.LongPress` fires via `LocalHapticFeedback`.
+- **Minimal full-screen preview** — opens a borderless, edge-to-edge image on a black background (`ContentScale.Fit`), with system bars hidden for an immersive view. A larger bitmap is loaded via `contentResolver.loadThumbnail`.
+- **Release to close** — lifting the finger (or cancelling the press, e.g. by scrolling) dismisses the preview and resets the ring.
+- **Animated open/close** — the overlay animates in/out with a combined scale + fade transition.
+- No new permissions required (haptics use `LocalHapticFeedback`).
+
+**Implementation:** `ui/screens/home/screenshot/ScreenshotThumbnail.kt` · `ui/screens/home/screenshot/ScreenshotPreviewOverlay.kt`
+
+---
+
 ## Battery Optimization Opt-Out
 
 A dedicated permission card allows the user to disable battery optimization for the app with a single tap.

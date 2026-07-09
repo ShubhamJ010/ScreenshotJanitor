@@ -14,4 +14,19 @@ class SettingsRepository(context: Context) {
     fun setAutoArchiveEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(AppConstants.PREF_AUTO_ARCHIVE, enabled) }
     }
+
+    fun getCleanupHour(): Int {
+        return prefs.getInt(AppConstants.PREF_CLEANUP_HOUR, AppConstants.DEFAULT_CLEANUP_HOUR)
+    }
+
+    fun getCleanupMinute(): Int {
+        return prefs.getInt(AppConstants.PREF_CLEANUP_MINUTE, AppConstants.DEFAULT_CLEANUP_MINUTE)
+    }
+
+    fun setCleanupTime(hour: Int, minute: Int) {
+        prefs.edit {
+            putInt(AppConstants.PREF_CLEANUP_HOUR, hour)
+            putInt(AppConstants.PREF_CLEANUP_MINUTE, minute)
+        }
+    }
 }

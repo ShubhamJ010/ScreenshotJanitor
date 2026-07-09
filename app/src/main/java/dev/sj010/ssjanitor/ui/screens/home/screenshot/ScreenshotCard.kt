@@ -44,6 +44,8 @@ fun ScreenshotCard(
     onArchive: () -> Unit,
     onKeep: () -> Unit,
     onDelete: () -> Unit,
+    onHoldComplete: (String) -> Unit = {},
+    onRelease: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val cardColor = when {
@@ -68,7 +70,11 @@ fun ScreenshotCard(
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
                 verticalAlignment = Alignment.Top
             ) {
-                ScreenshotThumbnail(uriString = screenshot.uri)
+                ScreenshotThumbnail(
+                    uriString = screenshot.uri,
+                    onHoldComplete = onHoldComplete,
+                    onRelease = onRelease
+                )
 
                 Column(
                     modifier = Modifier.weight(1f),

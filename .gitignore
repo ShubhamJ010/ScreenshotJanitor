@@ -21,3 +21,6 @@ local.properties
 *.jks
 *.keystore
 keystore.properties
+
+# Local, project-only agent skills (not committed/shared)
+.skills/

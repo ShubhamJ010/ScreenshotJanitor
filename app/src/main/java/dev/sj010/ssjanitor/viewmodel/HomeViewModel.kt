@@ -5,16 +5,13 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.work.BackoffPolicy
-import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import androidx.work.WorkRequest
+import dev.sj010.ssjanitor.core.constants.AppConstants
 import dev.sj010.ssjanitor.data.db.entity.ScreenshotEntity
 import dev.sj010.ssjanitor.data.repository.ScreenshotRepository
 import dev.sj010.ssjanitor.data.repository.SettingsRepository
-import dev.sj010.ssjanitor.worker.ScreenshotCleanupWorker
+import dev.sj010.ssjanitor.worker.CleanupScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,8 +21,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import java.util.Calendar
-import java.util.concurrent.TimeUnit
 
 data class HomeUiState(
     val screenshots: List<ScreenshotEntity> = emptyList(),
@@ -99,7 +94,7 @@ class HomeViewModel(
         // For simplicity, we can just rely on isAutoArchiveEnabled flow for UI feedback.
     }
 
-    val nextCleanupTimeMillis: StateFlow<Long?> = workManager.getWorkInfosForUniqueWorkFlow("ScreenshotCleanupWork")
+    val nextCleanupTimeMillis: StateFlow<Long?> = workManager.getWorkInfosForUniqueWorkFlow(AppConstants.WORK_CLEANUP_NAME)
         .map { workInfos ->
             val info = workInfos.firstOrNull()
             Log.d("HomeViewModel", "WorkInfo updated: state=${info?.state}, nextScheduleTimeMillis=${info?.nextScheduleTimeMillis}, runAttemptCount=${info?.runAttemptCount}")
@@ -171,37 +166,20 @@ class HomeViewModel(
     }
 
     fun rescheduleCleanup(hour: Int, minute: Int, context: Context) {
-        val now = Calendar.getInstance()
-        val target = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, hour)
-            set(Calendar.MINUTE, minute)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-            // If the chosen time is already past for today, schedule for tomorrow
-            if (before(now)) add(Calendar.DAY_OF_YEAR, 1)
-        }
-        val delayMillis = target.timeInMillis - now.timeInMillis
+        val delayMillis = CleanupScheduler.computeDelayMillis(hour, minute)
 
-        val constraints = Constraints.Builder()
-            .setRequiresBatteryNotLow(true)
-            .setRequiresStorageNotLow(true)
-            .build()
-
-        val cleanupRequest = PeriodicWorkRequestBuilder<ScreenshotCleanupWorker>(24, TimeUnit.HOURS)
-            .setConstraints(constraints)
-            .setInitialDelay(delayMillis, TimeUnit.MILLISECONDS)
-            .setBackoffCriteria(
-                BackoffPolicy.LINEAR,
-                WorkRequest.MIN_BACKOFF_MILLIS,
-                TimeUnit.MILLISECONDS
-            )
-            .build()
-
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            "ScreenshotCleanupWork",
-            ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
-            cleanupRequest
+        // Override any existing schedule (user explicitly chose a new time)
+        CleanupScheduler.scheduleCleanup(
+            context,
+            delayMillis,
+            ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE
         )
+        CleanupScheduler.scheduleReminder(
+            context,
+            delayMillis,
+            ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE
+        )
+        settingsRepository.setCleanupTime(hour, minute)
     }
 }
 

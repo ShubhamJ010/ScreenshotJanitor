@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.1] - 2026-07-09
+
+### Added
+- **Hold-to-preview thumbnails** — Press and hold any screenshot thumbnail to reveal a Material-expressive squircle border that thickens as the hold progresses; at 0.9s it fires a long-press haptic and opens a minimal, borderless full-screen preview. Releasing (or scrolling away) closes it. Both open and close are animated (scale + fade), and the preview is immersive (system bars hidden). Implemented in `ScreenshotThumbnail` (gesture + growing border) and the new `ScreenshotPreviewOverlay`.
+- **Pre-cleanup heads-up reminder** — A high-priority (heads-up) notification titled "Janitor is on the way" fires 30 minutes before the scheduled daily cleanup, warning the user that archived screenshots will be auto-deleted soon. Only shown when there are screenshots actually pending deletion, with **Review** and **Clean up now** actions.
+- **Default scheduled cleanup time** — Cleanup (and its reminder) now default to **11:30 PM in the device's local timezone**; the chosen time is persisted in `SettingsRepository`.
+- **`CleanupScheduler`** — Shared scheduling helper that keeps the daily cleanup worker and the pre-cleanup reminder worker aligned across reschedules and reboots.
+- **`CleanupReminderWorker`** — Worker that triggers the heads-up reminder; runs daily 30 minutes before cleanup.
+- **`ssjanitor_reminder_channel`** — New `IMPORTANCE_HIGH` notification channel for the heads-up cleanup warning.
+
 ## [1.0.0] - 2026-06-27
 
 ### Changed

@@ -39,9 +39,20 @@ class ScreenshotNotificationManager(private val context: Context) {
             ).apply {
                 description = "Keeps screenshot detection active in the background"
             }
-            
+
+            // High-importance channel so the pre-cleanup warning reliably appears
+            // as a heads-up (peek) notification.
+            val reminderChannel = NotificationChannel(
+                AppConstants.NOTIFICATION_REMINDER_CHANNEL_ID,
+                AppConstants.NOTIFICATION_REMINDER_CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = AppConstants.NOTIFICATION_REMINDER_CHANNEL_DESC
+            }
+
             notificationManager.createNotificationChannel(mainChannel)
             notificationManager.createNotificationChannel(serviceChannel)
+            notificationManager.createNotificationChannel(reminderChannel)
         }
     }
 
@@ -181,6 +192,54 @@ class ScreenshotNotificationManager(private val context: Context) {
 
         try {
             notificationManager.notify(AppConstants.NOTIFICATION_CLEANUP_ID, builder.build())
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Missing POST_NOTIFICATIONS permission", e)
+        }
+    }
+
+    /**
+     * Heads-up warning shown ~30 minutes before the scheduled cleanup.
+     * Uses the high-importance reminder channel and MAX priority so it peeks.
+     */
+    fun showCleanupReminderNotification(pendingCount: Int) {
+        Log.d(TAG, "Showing pre-cleanup reminder for $pendingCount screenshots")
+
+        // "Review" — opens the app so the user can keep/archive screenshots
+        val reviewIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val reviewPendingIntent = PendingIntent.getActivity(
+            context,
+            6,
+            reviewIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // "Clean up now" — triggers an immediate cleanup via MainActivity
+        val cleanupIntent = Intent(context, MainActivity::class.java).apply {
+            action = AppConstants.ACTION_CLEANUP_OLD
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val cleanupPendingIntent = PendingIntent.getActivity(
+            context,
+            7,
+            cleanupIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val builder = NotificationCompat.Builder(context, AppConstants.NOTIFICATION_REMINDER_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("Janitor is on the way")
+            .setContentText("Janitor deletes $pendingCount screenshot(s) in 30 min. Review now.")
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setContentIntent(reviewPendingIntent)
+            .setAutoCancel(true)
+            .addAction(android.R.drawable.ic_menu_view, "Review", reviewPendingIntent)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Clean up now", cleanupPendingIntent)
+
+        try {
+            notificationManager.notify(AppConstants.NOTIFICATION_REMINDER_ID, builder.build())
         } catch (e: SecurityException) {
             Log.e(TAG, "Missing POST_NOTIFICATIONS permission", e)
         }

@@ -29,4 +29,14 @@ flowchart TD
 
 ## Channels
 
-A dedicated notification channel is configured during app initialization for screenshot alerts.
+Two notification channels are configured during app initialization:
+
+| Channel | Importance | Purpose |
+|---|---|---|
+| `ssjanitor_channel` (Screenshot Detection) | DEFAULT | New-screenshot alerts with Keep/Archive/Delete actions |
+| `ssjanitor_service_channel` (Background Detection) | LOW | Ongoing foreground detection service |
+| `ssjanitor_reminder_channel` (Cleanup Reminder) | **HIGH** | Pre-cleanup heads-up warning, 30 min before scheduled cleanup |
+
+The **Cleanup Reminder** channel is `IMPORTANCE_HIGH` so the "Janitor is on the way"
+warning reliably appears as a heads-up (peek) notification with `PRIORITY_MAX`.
+It respects the device's Do Not Disturb settings.
