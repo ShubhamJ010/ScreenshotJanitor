@@ -1,6 +1,7 @@
 package dev.sj010.ssjanitor
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,13 +36,16 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
-        // Optimize for high refresh rate (120Hz)
-        val modes = display?.supportedModes
-        val maxRefreshRateMode = modes?.maxByOrNull { it.refreshRate }
-        if (maxRefreshRateMode != null && (maxRefreshRateMode.refreshRate > 60f)) {
-            val layoutParams = window.attributes
-            layoutParams.preferredDisplayModeId = maxRefreshRateMode.modeId
-            window.attributes = layoutParams
+        // Optimize for high refresh rate (120Hz). supportedModes / preferredDisplayModeId
+        // and Activity#getDisplay() all require API 30 (R).
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val modes = display?.supportedModes
+            val maxRefreshRateMode = modes?.maxByOrNull { it.refreshRate }
+            if (maxRefreshRateMode != null && (maxRefreshRateMode.refreshRate > 60f)) {
+                val layoutParams = window.attributes
+                layoutParams.preferredDisplayModeId = maxRefreshRateMode.modeId
+                window.attributes = layoutParams
+            }
         }
 
         enableEdgeToEdge()
