@@ -18,8 +18,8 @@
 
 ## Android Version Support
 
-- **Android 14+** (min SDK 34)
-- Older versions intentionally unsupported to simplify storage handling, permission management, background execution, and maintenance.
+- **Android 10+** (min SDK 29)
+- Automatic background cleanup requires Android 11+ (All-Files access). On Android 10, detection and manual/notification deletes work, but silent background deletion is unavailable (All-Files access does not exist below API 30).
 
 ## MVP Scope (v1.0)
 
@@ -77,7 +77,7 @@ The app should feel like a native Android utility.
 | Notification actions | ❌ Not tested |
 | Cleanup reliability | ❌ Not tested |
 | Battery impact | ❌ Not tested |
-| Android 14 behavior | ✅ Verified |
+| Android 10+ behavior (API 29-36) | ⚠️ Verify on emulator matrix |
 | Process death recovery | ❌ Not tested |
 
 ## Building

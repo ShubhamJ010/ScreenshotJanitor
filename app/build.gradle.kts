@@ -38,7 +38,7 @@ android {
 
     defaultConfig {
         applicationId = "dev.sj010.ssjanitor"
-        minSdk = 34
+        minSdk = 29
         targetSdk = 36
         versionCode = 8
         versionName = "1.1.0"

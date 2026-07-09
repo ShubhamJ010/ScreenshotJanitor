@@ -1,6 +1,16 @@
 # Changelog
 
-## [1.1.0] - 2026-07-09
+## [Unreleased]
+
+### Changed
+- **Lower `minSdk` to 29 (Android 10)** — Issue #2. The app now supports Android 10+ instead of requiring Android 14+. Backward-compatible screenshot detection continues to use `MediaStore` + `ContentObserver`; the foreground service now only requests the `specialUse` type on API 34+ and falls back to no type on older levels.
+
+### Fixed
+- Storage-permission trap on Android 10-12: the runtime check and request now use `READ_EXTERNAL_STORAGE` below API 33 (via `StoragePermissions`) instead of always requesting `READ_MEDIA_IMAGES`, which does not exist below 33.
+- Foreground-service crash on API 29-33: `startForeground` only passes `FOREGROUND_SERVICE_TYPE_SPECIAL_USE` on API 34+.
+
+### Notes
+- Automatic background cleanup requires Android 11+ (All-Files access). On Android 10, detection and manual/notification deletes still work; silent background deletion is intentionally disabled.
 
 ### Added
 - **Janitor On/Off toggle** — Long-press the **Pending** stat card to toggle the Janitor background monitor on or off. When off, a Material 3 Expressive red **"OFF" stamp** appears on the Pending card, the background detection service is stopped (the squiggly rotating indicator in **Next Scheduled Cleanup** also freezes), and a snackbar confirms the state. The choice persists across restarts and reboots. Implemented via `HomeViewModel.toggleJanitor()`, `SettingsRepository`, `SsJanitorApp.stopDetectionService()`, the new `OffBadge`, and an `isActive` flag on `NextCleanupBanner`.

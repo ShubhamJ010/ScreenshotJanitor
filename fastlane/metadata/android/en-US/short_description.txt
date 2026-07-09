@@ -1,1 +1,1 @@
-Minimal Android 14+ screenshot management utility — archive, keep, or delete screenshots with a single tap.
+Minimal Android 10+ screenshot management utility — archive, keep, or delete screenshots with a single tap.

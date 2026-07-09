@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import dev.sj010.ssjanitor.core.permissions.StoragePermissions
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -72,19 +73,19 @@ fun HomeScreen(
     }
 
     var hasStoragePermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.READ_MEDIA_IMAGES
-            ) == PackageManager.PERMISSION_GRANTED
-        )
+        mutableStateOf(StoragePermissions.hasStoragePermission(context))
     }
 
     var isAllFilesManager by remember {
         mutableStateOf(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 android.os.Environment.isExternalStorageManager()
-            } else true
+            } else {
+                // All-Files access does not exist below Android 11 (API 30), and
+                // automatic background cleanup is intentionally disabled there (see
+                // ScreenshotCleanupWorker), so there is nothing to request.
+                true
+            }
         )
     }
 
@@ -243,7 +244,7 @@ fun HomeScreen(
                     list.add(Manifest.permission.POST_NOTIFICATIONS)
                 }
                 if (!hasStoragePermission) {
-                    list.add(Manifest.permission.READ_MEDIA_IMAGES)
+                    list.add(StoragePermissions.requiredStoragePermission())
                 }
                 if (list.isNotEmpty()) {
                     permissionLauncher.launch(list.toTypedArray())
