@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import dev.sj010.ssjanitor.SsJanitorApp
-import dev.sj010.ssjanitor.worker.CleanupScheduler
 
 class BootReceiver : BroadcastReceiver() {
 
@@ -14,8 +13,6 @@ class BootReceiver : BroadcastReceiver() {
             val app = context.applicationContext as SsJanitorApp
             if (app.settingsRepository.isJanitorEnabled()) {
                 app.startDetectionService()
-                // Re-arm the pre-cleanup reminder alarm (Alarms do not survive reboot).
-                CleanupScheduler.setReminderAlarm(context)
             }
             pendingResult.finish()
         }
