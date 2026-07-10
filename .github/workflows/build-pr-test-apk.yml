@@ -1,17 +1,15 @@
-name: Build APK
+name: Build PR Test APK
 
-# Produces a downloadable, installable test APK for every feature/fix branch push
-# and every PR to main, as standard CI/CD practice (see issue #5).
+# Produces a downloadable, installable test APK for every pull request to main,
+# as standard CI/CD practice (see issue #5).
 # - Uploads the APK as a pipeline artifact (fast download from the run).
-# - Publishes it as an automated pre-release keyed to the source branch/PR,
+# - Publishes it as an automated pre-release keyed to the PR number,
 #   updated in place so old test builds don't accumulate.
+#
+# Branch pushes do NOT create a release (only PRs do).
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - "feature/**"
-      - "fix/**"
   pull_request:
     branches:
       - "main"
@@ -20,7 +18,7 @@ permissions:
   contents: write # needed to create/update pre-release tags
 
 jobs:
-  build-apk:
+  build-pr-apk:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,13 +38,7 @@ jobs:
       - name: Determine pre-release tag
         id: tag
         shell: bash
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "tag=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
-          else
-            SLUG=$(echo "${GITHUB_REF_NAME}" | tr '/' '-' | tr '_' '-')
-            echo "tag=test-${SLUG}" >> "$GITHUB_OUTPUT"
-          fi
+        run: echo "tag=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -66,10 +58,11 @@ jobs:
           artifacts: app/build/outputs/apk/debug/app-debug.apk
           token: ${{ secrets.GITHUB_TOKEN }}
           body: |
-            Automated **debug-signed** test APK for `${{ github.ref_name }}` (${{ github.sha }}).
+            Automated **debug-signed** test APK for PR #${{ github.event.pull_request.number }} (`${{ github.ref_name }}`, ${{ github.sha }}).
 
             Install with "Unknown sources" enabled. CI has no keystore, so this build is
             debug-signed (same code as release; sideload-only). A release-signed variant
             can be added later via repo secrets if desired.
 
             Also downloadable as a pipeline artifact from the same run.
+
