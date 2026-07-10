@@ -280,7 +280,8 @@ fun HomeScreen(
                 }
             },
             onHoldComplete = { uri, rect -> previewUri = uri; previewRect = rect },
-            onRelease = { previewUri = null }
+            onRelease = { previewUri = null },
+            isPreviewOpen = previewUri != null
         )
     }
 
