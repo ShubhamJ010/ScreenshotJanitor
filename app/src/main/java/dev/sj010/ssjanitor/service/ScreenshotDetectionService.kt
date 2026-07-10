@@ -25,7 +25,7 @@ class ScreenshotDetectionService : Service() {
         startForeground(
             AppConstants.NOTIFICATION_SERVICE_ID,
             nm.createForegroundServiceNotification(),
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE else 0
         )
         detector.startDetector()

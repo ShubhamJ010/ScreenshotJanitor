@@ -1,0 +1,68 @@
+name: Build PR Test APK
+
+# Produces a downloadable, installable test APK for every pull request to main,
+# as standard CI/CD practice (see issue #5).
+# - Uploads the APK as a pipeline artifact (fast download from the run).
+# - Publishes it as an automated pre-release keyed to the PR number,
+#   updated in place so old test builds don't accumulate.
+#
+# Branch pushes do NOT create a release (only PRs do).
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - "main"
+
+permissions:
+  contents: write # needed to create/update pre-release tags
+
+jobs:
+  build-pr-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "17"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --build-cache --parallel
+
+      - name: Determine pre-release tag
+        id: tag
+        shell: bash
+        run: echo "tag=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      - name: Publish pre-release test APK
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.tag.outputs.tag }}
+          name: Test build ${{ steps.tag.outputs.tag }}
+          prerelease: true
+          allowUpdates: true
+          removeArtifacts: true
+          artifacts: app/build/outputs/apk/debug/app-debug.apk
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            Automated **debug-signed** test APK for PR #${{ github.event.pull_request.number }} (`${{ github.ref_name }}`, ${{ github.sha }}).
+
+            Install with "Unknown sources" enabled. CI has no keystore, so this build is
+            debug-signed (same code as release; sideload-only). A release-signed variant
+            can be added later via repo secrets if desired.
+
+            Also downloadable as a pipeline artifact from the same run.
+

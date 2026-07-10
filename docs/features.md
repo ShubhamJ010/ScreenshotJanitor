@@ -4,7 +4,7 @@
 
 Detect newly created screenshots using `MediaStore` and `ContentObserver`.
 
-- Supports Android 14+ scoped storage model.
+- Supports Android 10+ scoped storage model. Detection works on Android 10+; automatic background cleanup requires Android 11+ (All-Files access).
 - Event-driven architecture — no continuous polling.
 - **URI-based detection** — queries by content URI ID instead of bulk-scanning latest images, minimizing read overhead.
 - **Cold-start handling** — `performInitialScan()` catches screenshots taken during app startup; `scanLatestScreenshots()` fallback handles edge cases where `onChange` fires before MediaStore creates the row.

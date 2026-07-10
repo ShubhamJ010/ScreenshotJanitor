@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <!--
       Splash screen theme for ScreenshotJanitor.
@@ -10,15 +10,15 @@
       can resolve them on all API levels. Android 12+ overrides them with
       wallpaper-derived values for Material You icon theming.
     -->
-    <style name="Theme.ssJanitor" parent="Theme.SplashScreen">
+    <style name="Theme.ssJanitor" parent="Theme.SplashScreen" tools:targetApi="31">
         <!-- Material You icon colors (fallback values for pre-Android 12) -->
         <item name="colorPrimary">#006E6D</item>
         <item name="colorOnPrimary">#FFFFFF</item>
 
         <!-- Icon shown in the splash circle -->
         <item name="windowSplashScreenAnimatedIcon">@drawable/avd_auto_delete</item>
-        <!-- Dynamic Material You background for splash icon -->
-        <item name="windowSplashScreenIconBackgroundColor">?attr/colorPrimary</item>
+        <!-- Dynamic Material You background for splash icon (colorBackground is wallpaper-derived on API 31+) -->
+        <item name="windowSplashScreenIconBackgroundColor">?android:attr/colorBackground</item>
         <item name="windowSplashScreenAnimationDuration">400</item>
         <!-- After splash, Compose takes over theming -->
         <item name="postSplashScreenTheme">@style/Theme.ssJanitor.Main</item>
@@ -26,6 +26,8 @@
           Override the platform splash background to use the system's
           colorBackground (which is Material You dynamic on Android 12+).
           The android: prefix targets the real system splash screen on API 31+.
+          Backed by androidx.core:core-splashscreen, so it is safe pre-31
+          (lint false-positive for the API 31 attribute is suppressed above).
         -->
         <item name="android:windowSplashScreenBackground">?android:attr/colorBackground</item>
     </style>

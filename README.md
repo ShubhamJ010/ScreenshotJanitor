@@ -1,7 +1,7 @@
 <div align="center">
   <img src="screenshots/app_icon.png" alt="ssJanitor" width="96" height="96"/>
   <h1>ssJanitor</h1>
-  <p>Minimal Android 14+ screenshot management utility</p>
+  <p>Minimal Android 10+ screenshot management utility</p>
   <p>
     <strong>Kotlin</strong> · <strong>Jetpack Compose</strong> · <strong>Material 3</strong>
   </p>
@@ -68,7 +68,7 @@ ssJanitor monitors newly created screenshots, lets you archive or delete them th
 
 1. Open the project in Android Studio.
 2. Sync Gradle (uses version catalog at `gradle/libs.versions.toml`).
-3. Build and run on a device running **Android 14+** (min SDK 34).
+3. Build and run on a device running **Android 10+** (min SDK 29). Automatic background cleanup requires Android 11+ (All-Files access); detection and manual deletes work on Android 10+.
 
 No API keys, no cloud services, no configuration required.
 

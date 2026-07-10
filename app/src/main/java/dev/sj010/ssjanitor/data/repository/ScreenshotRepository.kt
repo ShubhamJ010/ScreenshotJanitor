@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 
+import android.app.RecoverableSecurityException
 import android.content.IntentSender
 import android.provider.MediaStore
 
@@ -102,8 +103,24 @@ class ScreenshotRepository(private val screenshotDao: ScreenshotDao) {
 
         try {
             val uris = existingUris.map { Uri.parse(it) }
-            val pendingIntent = MediaStore.createDeleteRequest(context.contentResolver, uris)
-            DeleteResult.RequiresPermission(pendingIntent.intentSender)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val pendingIntent = MediaStore.createDeleteRequest(context.contentResolver, uris)
+                return@withContext DeleteResult.RequiresPermission(pendingIntent.intentSender)
+            }
+            // API 29 has no bulk delete request (the Collection overload is API 30).
+            // Attempt a direct delete and surface the framework's user-consent intent
+            // when required (RecoverableSecurityException, added in API 29).
+            val deleted = mutableListOf<String>()
+            for ((uriString, uri) in existingUris.zip(uris)) {
+                try {
+                    val rows = context.contentResolver.delete(uri, null, null)
+                    if (rows > 0) deleted.add(uriString)
+                } catch (e: RecoverableSecurityException) {
+                    return@withContext DeleteResult.RequiresPermission(e.userAction.actionIntent.intentSender)
+                }
+            }
+            if (deleted.isNotEmpty()) markAsDeleted(deleted)
+            return@withContext DeleteResult.Success
         } catch (e: Exception) {
             Log.e(TAG, "Failed to create delete request for screenshots: $existingUris", e)
             DeleteResult.Failed(e)
