@@ -147,8 +147,11 @@ fun HomeScreen(
             hasNotificationPermission =
                 permissions[Manifest.permission.POST_NOTIFICATIONS] ?: hasNotificationPermission
         }
-        hasStoragePermission =
-            permissions[Manifest.permission.READ_MEDIA_IMAGES] ?: hasStoragePermission
+        // Re-evaluate from the SDK-aware helper rather than the result map:
+        // on API 29-32 the requested permission is READ_EXTERNAL_STORAGE, so
+        // READ_MEDIA_IMAGES is absent from `permissions` and a map lookup would
+        // keep the stale (un-granted) value, stranding the UI in "Permissions Required".
+        hasStoragePermission = StoragePermissions.hasStoragePermission(context)
     }
 
     val batteryOptLauncher = rememberLauncherForActivityResult(
