@@ -75,7 +75,10 @@ fun HomeContent(
     isJanitorEnabled: Boolean = true,
     onToggleJanitor: () -> Unit = {},
     onHoldComplete: (String, Rect) -> Unit = { _, _ -> },
-    onRelease: () -> Unit = {}
+    onRelease: () -> Unit = {},
+    // While the full-screen preview is open, user scrolling must be disabled so
+    // moving the (still-held) finger doesn't scroll the list behind it.
+    isPreviewOpen: Boolean = false
 ) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -116,6 +119,7 @@ fun HomeContent(
 
     LazyColumn(
         state = listState,
+        userScrollEnabled = !isPreviewOpen,
         modifier = Modifier
             .fillMaxSize()
             .nestedScroll(pullToReveal.nestedScrollConnection),

@@ -4,8 +4,9 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Size
 import androidx.compose.foundation.Image
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -23,10 +24,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInRoot
@@ -40,17 +44,33 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
+ * How long the thumbnail must be held before the full-screen preview opens.
+ * This delay is what prevents an accidental tap / brush-past from opening the
+ * preview.
+ */
+private const val HOLD_DURATION_MS = 350L
+
+/**
+ * Duration of the quick blur fade-in (and fade-out on early release) that plays
+ * while the hold delay is counting down.
+ */
+private const val BLUR_FADE_MS = 150
+
+/** Blur radius (dp) applied to the thumbnail while the hold cue is fully shown. */
+private const val BLUR_RADIUS_DP = 12f
+
+/**
  * Thumbnail tile with a "press-and-hold to preview" gesture.
  *
- * While the user holds, a Material progress ring fills over [HOLD_DURATION_MS].
- * On completion it fires a long-press haptic and invokes [onHoldComplete] (the
- * caller opens the full-screen preview, animating out of this tile, along with
- * this tile's on-screen [Rect]). Releasing (or cancelling) the press invokes
- * [onRelease] and resets the ring.
- *
- * The growing ring is drawn *outside* the image: the image is inset within the
- * tile and the ring outlines the tile edge, leaving a gap so it never clips the
- * thumbnail artwork.
+ * Pressing starts a [HOLD_DURATION_MS] hold delay — during which a blur overlay
+ * quickly fades in over the thumbnail as a visual cue — so a quick tap or a
+ * brush-past never accidentally opens the full-screen preview. Only if the press
+ * is held for the full duration does it fire a long-press haptic and invoke
+ * [onHoldComplete] (the caller opens the full-screen preview, animating out of
+ * this tile, along with this tile's on-screen [Rect]). Releasing (or cancelling)
+ * the press before the delay elapses invokes [onRelease] and quickly fades the
+ * blur back out without opening the preview; from the moment the hold completes
+ * the flow is unchanged.
  */
 @Composable
 fun ScreenshotThumbnail(
@@ -64,6 +84,9 @@ fun ScreenshotThumbnail(
     val coroutineScope = rememberCoroutineScope()
     var bitmap by remember(uriString) { mutableStateOf<Bitmap?>(null) }
     var tileRect by remember { mutableStateOf(Rect.Zero) }
+
+    // 0f = sharp, 1f = fully blurred. Drives the hold-delay blur cue.
+    val blurAlpha = remember { Animatable(0f) }
 
     LaunchedEffect(uriString) {
         // Small delay to prevent loading while scrolling fast
@@ -89,17 +112,50 @@ fun ScreenshotThumbnail(
                 tileRect = coordinates.boundsInRoot()
             }
             .pointerInput(uriString) {
-                detectTapGestures(
-                    onPress = {
+                awaitPointerEventScope {
+                    while (true) {
+                        // Wait for a finger to go down on this thumbnail.
+                        val downEvent = awaitPointerEvent()
+                        val downChange = downEvent.changes.firstOrNull { it.pressed }
+                            ?: continue
+                        val pointerId = downChange.id
+
+                        // Begin the hold: fade in the blur cue, then — after the
+                        // delay — open the preview. Sliding/swiping the finger must
+                        // NOT cancel this; only lifting it does (handled below).
                         val job = coroutineScope.launch {
+                            launch {
+                                blurAlpha.animateTo(1f, tween(durationMillis = BLUR_FADE_MS))
+                            }
+                            // Hold delay guards against accidental preview triggers.
+                            delay(HOLD_DURATION_MS)
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onHoldComplete(uriString, tileRect)
                         }
-                        tryAwaitRelease()
+
+                        // Keep the hold alive through any movement. End only when
+                        // this specific finger is lifted (or leaves the window).
+                        var lifted = false
+                        while (!lifted) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull { it.id == pointerId }
+                            if (change == null ||
+                                !change.pressed ||
+                                event.type == PointerEventType.Exit
+                            ) {
+                                lifted = true
+                            }
+                        }
+
                         job.cancel()
+                        // Finger lifted early: fade the blur back out and do not
+                        // open the preview.
+                        coroutineScope.launch {
+                            blurAlpha.animateTo(0f, tween(durationMillis = BLUR_FADE_MS))
+                        }
                         onRelease()
                     }
-                )
+                }
             },
         contentAlignment = Alignment.Center
     ) {
@@ -126,6 +182,21 @@ fun ScreenshotThumbnail(
                     modifier = Modifier.size(32.dp)
                 )
             }
+        }
+
+        // Hold-delay blur cue: fades in while the user holds, fades back out on
+        // release. Sits above the artwork so the thumbnail appears to blur over.
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap!!.asImageBitmap(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(20.dp))
+                    .graphicsLayer { alpha = blurAlpha.value }
+                    .blur(BLUR_RADIUS_DP.dp)
+            )
         }
     }
 }

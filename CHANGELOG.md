@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1] - 2026-07-11
+
+### Fixed
+- **Accidental preview triggers** — Holding a thumbnail no longer opens the full-screen preview on a quick tap or a brush-past. A `HOLD_DURATION_MS` (350ms) hold delay now guards the trigger, during which a blur overlay quickly fades in over the thumbnail as a visual hold cue. Implemented in `ScreenshotThumbnail`.
+- **Swiping cancelled the preview** — Moving or swiping the finger while holding used to end the hold early (the scrollable list consumed the gesture). The hold now persists through any finger movement and ends **only when the finger is lifted** (or leaves the window). Implemented in `ScreenshotThumbnail`.
+- **List scrolled behind the preview** — While the full-screen preview was open, moving the still-held finger scrolled the list underneath it. User scrolling (and the pull-to-reveal gesture) is now disabled while the preview is visible. Implemented via an `isPreviewOpen` flag threaded from `HomeScreen` into `HomeContent`'s `LazyColumn` (`userScrollEnabled`).
+
 ## [1.1.0] - 2026-07-09
 
 ### Added
