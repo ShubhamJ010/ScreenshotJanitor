@@ -35,7 +35,6 @@ object AppConstants {
 
     // Unique work names
     const val WORK_CLEANUP_NAME = "ScreenshotCleanupWork"
-    const val WORK_REMINDER_NAME = "ScreenshotCleanupReminderWork"
 
     // Default scheduled cleanup time (local timezone): 11:30 PM
     const val DEFAULT_CLEANUP_HOUR = 23

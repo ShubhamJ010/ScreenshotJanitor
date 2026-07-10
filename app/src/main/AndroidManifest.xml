@@ -14,6 +14,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- Exact pre-cleanup reminder alarm (API 31+). If not granted we fall back to
+         an inexact while-idle alarm. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <application
         android:name=".SsJanitorApp"
@@ -61,6 +64,14 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".receiver.CleanupReminderReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="dev.sj010.ssjanitor.ACTION_CLEANUP_REMINDER" />
             </intent-filter>
         </receiver>
 
