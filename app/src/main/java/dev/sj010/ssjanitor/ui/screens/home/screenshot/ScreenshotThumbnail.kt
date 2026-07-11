@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Size
 import androidx.compose.foundation.Image
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -55,6 +56,19 @@ private const val HOLD_DURATION_MS = 350L
  * while the hold delay is counting down.
  */
 private const val BLUR_FADE_MS = 150
+
+/**
+ * How long to keep the thumbnail fully blurred after the preview starts closing,
+ * so the tile stays blurred until the collapsing overlay unmounts. Matches the
+ * overlay's collapse morph (280ms) plus its post-morph blur hold (100ms).
+ */
+private const val PREVIEW_COLLAPSE_MS = 380L
+
+/**
+ * Duration of the soft blur fade-out played once the preview overlay has unmounted,
+ * so the thumbnail dissolves from blur to clear instead of snapping.
+ */
+private const val BLUR_FADE_OUT_MS = 260
 
 /** Blur radius (dp) applied to the thumbnail while the hold cue is fully shown. */
 private const val BLUR_RADIUS_DP = 12f
@@ -123,6 +137,7 @@ fun ScreenshotThumbnail(
                         // Begin the hold: fade in the blur cue, then — after the
                         // delay — open the preview. Sliding/swiping the finger must
                         // NOT cancel this; only lifting it does (handled below).
+                        var holdCompleted = false
                         val job = coroutineScope.launch {
                             launch {
                                 blurAlpha.animateTo(1f, tween(durationMillis = BLUR_FADE_MS))
@@ -130,6 +145,7 @@ fun ScreenshotThumbnail(
                             // Hold delay guards against accidental preview triggers.
                             delay(HOLD_DURATION_MS)
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            holdCompleted = true
                             onHoldComplete(uriString, tileRect)
                         }
 
@@ -148,10 +164,25 @@ fun ScreenshotThumbnail(
                         }
 
                         job.cancel()
-                        // Finger lifted early: fade the blur back out and do not
-                        // open the preview.
-                        coroutineScope.launch {
-                            blurAlpha.animateTo(0f, tween(durationMillis = BLUR_FADE_MS))
+                        if (holdCompleted) {
+                            // The preview is open and collapses back into this tile,
+                            // ending in a strong blur. Keep the tile fully blurred
+                            // until the overlay unmounts, then softly fade the blur
+                            // out so it dissolves to a clear thumbnail (hard blur ->
+                            // fade out -> clear) instead of snapping from blur to sharp.
+                            coroutineScope.launch {
+                                delay(PREVIEW_COLLAPSE_MS)
+                                blurAlpha.animateTo(
+                                    0f,
+                                    tween(durationMillis = BLUR_FADE_OUT_MS, easing = FastOutSlowInEasing)
+                                )
+                            }
+                        } else {
+                            // Finger lifted early: fade the blur back out and do not
+                            // open the preview.
+                            coroutineScope.launch {
+                                blurAlpha.animateTo(0f, tween(durationMillis = BLUR_FADE_MS))
+                            }
                         }
                         onRelease()
                     }
