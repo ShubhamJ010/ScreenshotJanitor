@@ -22,10 +22,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoDelete
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.animation.Crossfade
 import androidx.compose.material3.AlertDialog
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
@@ -75,6 +78,10 @@ fun NextCleanupBanner(
 ) {
     val haptic = LocalHapticFeedback.current
     var showTimePicker by remember { mutableStateOf(false) }
+
+    // Cleanup mode: Scheduled (auto-clean on timer) vs Manual (tap-to-clean archive).
+    // Long-pressing the action button toggles between the two.
+    var mode by remember { mutableStateOf(CleanupMode.Scheduled) }
 
     // Derive initial hour/minute from the current scheduled time
     val initialHour = remember(timeMillis) {
@@ -154,6 +161,19 @@ fun NextCleanupBanner(
     val tertiaryColor = MaterialTheme.colorScheme.tertiary
     val onTertiaryColor = MaterialTheme.colorScheme.onTertiary
 
+    // Morph the action button between the 8-bump "squiggly" circle (scheduled) and
+    // the 4-lobed "wobble" shape (manual) whenever the mode changes.
+    val shapeLobes by animateFloatAsState(
+        targetValue = if (mode == CleanupMode.Scheduled) 8f else 4f,
+        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+        label = "shapeLobes"
+    )
+    val shapeAmplitude by animateFloatAsState(
+        targetValue = if (mode == CleanupMode.Scheduled) 0.08f else 0.20f,
+        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+        label = "shapeAmplitude"
+    )
+
     Box(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.CenterEnd
@@ -170,36 +190,56 @@ fun NextCleanupBanner(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable {
+                    .clickable(enabled = mode == CleanupMode.Scheduled) {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         showTimePicker = true
                     }
                     .padding(start = 16.dp, top = 16.dp, bottom = 16.dp, end = 76.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.AutoDelete,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                    modifier = Modifier.size(24.dp)
-                )
+                Crossfade(targetState = mode, label = "bannerIcon") { currentMode ->
+                    Icon(
+                        imageVector = if (currentMode == CleanupMode.Scheduled) {
+                            Icons.Default.AutoDelete
+                        } else {
+                            Icons.Default.Delete
+                        },
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
                 Column {
-                    Text(
-                        text = "Next Scheduled Cleanup",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer
-                    )
-                    val sdf = SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault())
-                    Text(
-                        text = sdf.format(Date(timeMillis)),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
-                    )
-                    Text(
-                        text = "Tap to change time",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.55f)
-                    )
+                    if (mode == CleanupMode.Scheduled) {
+                        Text(
+                            text = "Next Scheduled Cleanup",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                        val sdf = SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault())
+                        Text(
+                            text = sdf.format(Date(timeMillis)),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
+                        )
+                        Text(
+                            text = "Tap to change time",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.55f)
+                        )
+                    } else {
+                        Text(
+                            text = "Tap to delete archived",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                        Text(
+                            text = "Hold to switch back",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.55f)
+                        )
+                    }
                 }
             }
         }
@@ -208,11 +248,23 @@ fun NextCleanupBanner(
             modifier = Modifier
                 .padding(end = 12.dp)
                 .size(56.dp)
-                .clip(CircleShape)
-                .clickable {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    clickRotation += 360f
-                    onRunNow()
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onLongPress = {
+                            // Hold to toggle between Manual and Scheduled modes.
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            mode = if (mode == CleanupMode.Scheduled) {
+                                CleanupMode.Manual
+                            } else {
+                                CleanupMode.Scheduled
+                            }
+                        },
+                        onTap = {
+                            // Tap to run the cleanup: rotate the button and clean the archive.
+                            clickRotation += 360f
+                            onRunNow()
+                        }
+                    )
                 },
             contentAlignment = Alignment.Center
         ) {
@@ -224,7 +276,7 @@ fun NextCleanupBanner(
                     }
                     .background(
                         color = tertiaryColor,
-                        shape = SquigglyCircleShape
+                        shape = MorphingLobeShape(shapeLobes, shapeAmplitude)
                     )
             )
 
@@ -250,7 +302,21 @@ fun NextCleanupBanner(
     }
 }
 
-private val SquigglyCircleShape = object : Shape {
+private enum class CleanupMode {
+    Scheduled,
+    Manual
+}
+
+/**
+ * A morphing radial "blob" outline. [lobes] controls how many bumps/lobes the
+ * shape has (8 = subtle squiggly circle, 4 = wobble / 4-lobed squircle) and
+ * [amplitudeFraction] controls how deep those lobes protrude. Animating these
+ * two parameters smoothly morphs the outline between the two shapes.
+ */
+private data class MorphingLobeShape(
+    val lobes: Float,
+    val amplitudeFraction: Float
+) : Shape {
     override fun createOutline(
         size: Size,
         layoutDirection: LayoutDirection,
@@ -260,12 +326,12 @@ private val SquigglyCircleShape = object : Shape {
             val centerX = size.width / 2f
             val centerY = size.height / 2f
             val maxRadius = minOf(size.width, size.height) / 2f
-            val numBumps = 8
-            val amplitude = maxRadius * 0.08f
-            val numPoints = 180
-            for (i in 0 until numPoints) {
+            val amplitude = maxRadius * amplitudeFraction
+            val numPoints = 240
+            for (i in 0..numPoints) {
                 val angleRad = (i * 2 * Math.PI / numPoints).toFloat()
-                val currentRadius = maxRadius - amplitude + amplitude * kotlin.math.sin(angleRad * numBumps).toFloat()
+                val currentRadius =
+                    maxRadius - amplitude + amplitude * kotlin.math.sin(angleRad * lobes).toFloat()
                 val x = centerX + currentRadius * kotlin.math.cos(angleRad).toFloat()
                 val y = centerY + currentRadius * kotlin.math.sin(angleRad).toFloat()
                 if (i == 0) {
