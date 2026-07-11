@@ -12,7 +12,7 @@ composeBom = "2026.02.01"
 room = "2.8.4"
 work = "2.9.0"
 lifecycleViewModelCompose = "2.8.7"
-ksp = "2.2.10-2.0.2"
+ksp = "2.3.10"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
