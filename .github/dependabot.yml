@@ -1,0 +1,26 @@
+# Dependabot configuration
+# Keeps Gradle dependencies and GitHub Actions up to date automatically.
+version: 2
+updates:
+  # Java / Android dependencies managed via Gradle (libs.versions.toml, build.gradle)
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "build"
+
+  # GitHub Actions used in .github/workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "ci"
