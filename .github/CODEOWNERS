@@ -1,0 +1,12 @@
+# CODEOWNERS
+# Define who is automatically requested for review on pull requests.
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything in the repo.
+*       @ShubhamJ010
+
+# Android app source.
+/app/                       @ShubhamJ010
+
+# CI/CD pipelines and repository governance.
+/.github/                   @ShubhamJ010
