@@ -24,3 +24,7 @@ keystore.properties
 
 # Local, project-only agent skills (not committed/shared)
 .skills/
+
+# Profiling traces
+*.perfetto-trace
+

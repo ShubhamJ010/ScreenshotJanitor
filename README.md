@@ -11,7 +11,8 @@
     <a href="#tech-stack">Tech Stack</a> ·
     <a href="#getting-started">Getting Started</a> ·
     <a href="#permissions">Permissions</a> ·
-    <a href="docs/architecture.md">Architecture</a>
+    <a href="docs/architecture.md">Architecture</a> ·
+    <a href="docs/PROD_RELEASE_PROFILING.md">Performance Profile</a>
   </p>
 </div>
 
@@ -131,6 +132,7 @@ app/src/main/java/dev/sj010/ssjanitor/
 | [Notifications](docs/notifications.md) | Notification flow & action handling |
 | [Cleanup Worker](docs/cleanup.md) | WorkManager-based cleanup pipeline |
 | [Resource Usage](docs/resource-usage.md) | Foreground / background CPU, memory, and battery profiling |
+| [Performance Profile](docs/PROD_RELEASE_PROFILING.md) | Empirical production release profiling & benchmarks (Perfetto, ADB, dumpsys, AOT) |
 | [Development](docs/development.md) | Principles, design goals, MVP scope, future ideas |
 | [Release Signing](docs/RELEASE_SIGNING.md) | Keystore setup, CI signing, troubleshooting |
 | [Changelog](CHANGELOG.md) | Release history |
