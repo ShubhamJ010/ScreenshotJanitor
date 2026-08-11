@@ -105,12 +105,10 @@ fun HomeContent(
     // ── Pull-to-reveal state ────────────────────────────────────────────────
     val pullToReveal = rememberPullToRevealState(keptListSize = { keptList.size })
 
-    // True once user has scrolled all the way to the bottom of pending+achieved
+    // True once user has scrolled all the way to the bottom
     val isAtBottom by remember {
         derivedStateOf {
-            val layoutInfo = listState.layoutInfo
-            val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()
-            lastVisible != null && lastVisible.index >= layoutInfo.totalItemsCount - 1
+            !listState.canScrollForward
         }
     }
 
@@ -331,16 +329,13 @@ fun HomeContent(
             if (!pullToReveal.showKept && keptList.isNotEmpty()) {
                 item(key = "pull_to_kept") {
                     val pullFraction =
-                        (pullToReveal.pullOffsetAnim.value / 380f).coerceIn(0f, 1f)
-                    val isPulling = pullFraction > 0f
+                        (pullToReveal.pullOffset / 380f).coerceIn(0f, 1f)
 
                     PullToKeptIndicator(
+                        pullOffset = pullToReveal.pullOffset,
                         pullFraction = pullFraction,
                         isAtEnd = isAtBottom,
-                        isPulling = isPulling,
-                        isReleasing = pullToReveal.isReleasing,
-                        keptCount = keptList.size,
-                        modifier = Modifier.animateItem()
+                        keptCount = keptList.size
                     )
                 }
             }
