@@ -105,12 +105,10 @@ fun HomeContent(
     // ── Pull-to-reveal state ────────────────────────────────────────────────
     val pullToReveal = rememberPullToRevealState(keptListSize = { keptList.size })
 
-    // True once user has scrolled all the way to the bottom of pending+achieved
+    // True once user has scrolled all the way to the bottom
     val isAtBottom by remember {
         derivedStateOf {
-            val layoutInfo = listState.layoutInfo
-            val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()
-            lastVisible != null && lastVisible.index >= layoutInfo.totalItemsCount - 1
+            !listState.canScrollForward
         }
     }
 
@@ -168,9 +166,13 @@ fun HomeContent(
                             pullToReveal.dismissKept()
                         }
                     } else {
-                        pullToReveal.toggleShowKept()
+                        pullToReveal.showKept = true
                         coroutineScope.launch {
-                            listState.animateScrollToItem(listState.layoutInfo.totalItemsCount)
+                            kotlinx.coroutines.delay(60)
+                            val targetIndex = listState.layoutInfo.visibleItemsInfo
+                                .firstOrNull { it.key == "kept_header_inner" }?.index
+                                ?: (listState.layoutInfo.totalItemsCount - 1 - keptList.size).coerceAtLeast(0)
+                            listState.animateScrollToItem(targetIndex)
                         }
                     }
                 }
@@ -223,7 +225,7 @@ fun HomeContent(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = count.toString(),
+                            text = dev.sj010.ssjanitor.ui.screens.home.common.formatCompactCount(count),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -331,16 +333,13 @@ fun HomeContent(
             if (!pullToReveal.showKept && keptList.isNotEmpty()) {
                 item(key = "pull_to_kept") {
                     val pullFraction =
-                        (pullToReveal.pullOffsetAnim.value / 380f).coerceIn(0f, 1f)
-                    val isPulling = pullFraction > 0f
+                        (pullToReveal.pullOffset / 380f).coerceIn(0f, 1f)
 
                     PullToKeptIndicator(
+                        pullOffset = pullToReveal.pullOffset,
                         pullFraction = pullFraction,
                         isAtEnd = isAtBottom,
-                        isPulling = isPulling,
-                        isReleasing = pullToReveal.isReleasing,
-                        keptCount = keptList.size,
-                        modifier = Modifier.animateItem()
+                        keptCount = keptList.size
                     )
                 }
             }

@@ -1,42 +1,39 @@
 package dev.sj010.ssjanitor.ui.screens.home.gesture
 
-import android.os.Build
-import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Velocity
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 /**
  * Encapsulates the pull-to-reveal gesture logic for revealing "Kept" screenshots.
  *
  * Uses a rubber-band damped pull that resists harder the further you drag,
- * with haptic feedback at the threshold and a spring-back animation on release.
+ * with a spring-back animation on release.
  */
 class NestedScrollPullToRevealState(
     private val coroutineScope: CoroutineScope,
-    private val performHaptic: () -> Unit,
     private val keptListSize: () -> Int
 ) {
     var showKept by mutableStateOf(false)
 
-    val pullOffsetAnim = Animatable(0f)
+    // Direct float state updated synchronously during touch dragging to avoid 120Hz coroutine dispatch overhead
+    private var rawPullOffset by mutableFloatStateOf(0f)
 
-    private var isHapticTriggered by mutableStateOf(false)
+    // Animatable used strictly for spring-back release flings
+    private val releaseAnim = Animatable(0f)
+
     var isReleasing by mutableStateOf(false)
 
     // True once user has scrolled all the way to the bottom of pending+achieved
@@ -44,6 +41,9 @@ class NestedScrollPullToRevealState(
 
     private val pullThreshold = 380f
     private val maxPull = 520f
+
+    val pullOffset: Float
+        get() = if (isReleasing) releaseAnim.value else rawPullOffset
 
     val nestedScrollConnection: NestedScrollConnection = object : NestedScrollConnection {
         override fun onPostScroll(
@@ -56,55 +56,49 @@ class NestedScrollPullToRevealState(
                 (isAtBottomFn?.invoke() == true) && source == NestedScrollSource.UserInput
             ) {
                 val rawDelta = -available.y
-                val resistance = kotlin.math.sqrt(pullOffsetAnim.value / maxPull + 0.001f)
+                val resistance = kotlin.math.sqrt((rawPullOffset / maxPull).coerceAtLeast(0f) + 0.001f)
                 val damped = rawDelta * (1f - resistance * 0.6f)
-                val target = (pullOffsetAnim.value + damped).coerceIn(0f, maxPull)
-                coroutineScope.launch {
-                    pullOffsetAnim.snapTo(target)
-                    if (target >= pullThreshold && !isHapticTriggered) {
-                        isHapticTriggered = true
-                        performHaptic()
-                    }
-                }
+                val target = (rawPullOffset + damped).coerceIn(0f, maxPull)
+
+                rawPullOffset = target
                 return Offset(0f, available.y)
             }
             return Offset.Zero
         }
 
         override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-            if (!showKept && keptListSize() > 0 && pullOffsetAnim.value > 0f &&
+            if (!showKept && keptListSize() > 0 && rawPullOffset > 0f &&
                 available.y > 0f && source == NestedScrollSource.UserInput
             ) {
-                val consumed = available.y.coerceAtMost(pullOffsetAnim.value)
-                val target = pullOffsetAnim.value - consumed
-                coroutineScope.launch {
-                    pullOffsetAnim.snapTo(target)
-                    if (target < pullThreshold) {
-                        isHapticTriggered = false
-                    }
-                }
+                val consumed = available.y.coerceAtMost(rawPullOffset)
+                val target = rawPullOffset - consumed
+                rawPullOffset = target
                 return Offset(0f, consumed)
             }
             return Offset.Zero
         }
 
         override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-            if (!showKept && keptListSize() > 0) {
-                if (pullOffsetAnim.value >= pullThreshold) {
+            if (!showKept && keptListSize() > 0 && rawPullOffset > 0f) {
+                val initialOffset = rawPullOffset
+
+                if (initialOffset >= pullThreshold) {
                     showKept = true
-                    performHaptic()
-                } else {
-                    isReleasing = true
                 }
-                pullOffsetAnim.animateTo(
+
+                releaseAnim.snapTo(initialOffset)
+                isReleasing = true
+                rawPullOffset = 0f
+
+                releaseAnim.animateTo(
                     targetValue = 0f,
+                    initialVelocity = -available.y,
                     animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        dampingRatio = Spring.DampingRatioLowBouncy,
                         stiffness = Spring.StiffnessMediumLow
                     )
                 )
                 isReleasing = false
-                isHapticTriggered = false
             }
             return Velocity.Zero
         }
@@ -129,17 +123,9 @@ class NestedScrollPullToRevealState(
 @Composable
 fun rememberPullToRevealState(keptListSize: () -> Int): NestedScrollPullToRevealState {
     val scope = rememberCoroutineScope()
-    val view = LocalView.current
     return remember(keptListSize) {
         NestedScrollPullToRevealState(
             coroutineScope = scope,
-            performHaptic = {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                } else {
-                    view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                }
-            },
             keptListSize = keptListSize
         )
     }

@@ -48,7 +48,7 @@ fun SectionHeader(
         )
         Spacer(modifier = Modifier.weight(1f))
         Text(
-            text = "$count",
+            text = formatCompactCount(count),
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.outline

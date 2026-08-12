@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.2] - 2026-08-11
+
+### Performance
+- **Pull-to-reveal gesture optimization** — Replaced 120Hz coroutine dispatches during touch scroll processing (`onPostScroll`/`onPreScroll`) with direct float state updates (`rawPullOffset`), eliminating input latency spikes and coroutine object allocation churn.
+- **Gesture release & layout stability** — Removed `Modifier.animateItem()` and structural height expand/collapse from `PullToKeptIndicator`, using `graphicsLayer` translation & alpha for 100% smooth 60fps spring release animations without layout jumps.
+
+### Changed
+- **Compact count formatting** — Stats cards (Pending, Archived, Kept, Cleaned) and section headers now format counts using compact `1K`, `1.5K`, `10K`, `1.2M`, `1B` notation (`formatCompactCount`).
+- **Kept stat card click action** — Tapping or long-pressing the **Kept** stat card reveals the kept screenshots list and smoothly animates the scroll position directly to the "Kept Screenshots" header.
+
 ## [1.1.1] - 2026-07-11
 
 ### Fixed

@@ -1,7 +1,6 @@
 package dev.sj010.ssjanitor.ui.screens.home.gesture
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.Spring
@@ -11,7 +10,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -44,20 +42,18 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 
 /**
  * A pull-to-reveal indicator shown at the bottom of the screenshot list.
- * Displays a circle with a chevron (or bookmark when ready), plus animated
- * text and a progress bar during active pulling.
+ * Displays a circle with a chevron (or bookmark when ready), plus text and progress bar.
+ * Uses fixed layout height and graphicsLayer transformations for 100% smooth gesture release.
  */
 @Composable
 fun PullToKeptIndicator(
+    pullOffset: Float,
     pullFraction: Float,
     isAtEnd: Boolean,
-    isPulling: Boolean,
-    isReleasing: Boolean,
     keptCount: Int,
     modifier: Modifier = Modifier
 ) {
     val isReadyToRelease = pullFraction >= 1f
-    val showPullText = isPulling && !isReleasing
 
     val indicatorAlpha by animateFloatAsState(
         targetValue = if (isAtEnd) 1f else 0f,
@@ -80,20 +76,13 @@ fun PullToKeptIndicator(
         label = "containerColor"
     )
 
-    val chevronRotation by animateFloatAsState(
-        targetValue = if (isPulling) pullFraction * 180f else 0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "chevronRotation"
-    )
+    val chevronRotation = pullFraction * 180f
 
-    // Idle bounce hint: chevron gently floats up when at bottom, not pulling
+    // Idle bounce hint when at bottom and not pulling
     val infiniteTransition = rememberInfiniteTransition(label = "chevronBounce")
     val chevronBounce by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = if (isAtEnd && !isPulling && !isReadyToRelease) -8f else 0f,
+        targetValue = if (isAtEnd && pullFraction == 0f) -8f else 0f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 700, easing = FastOutSlowInEasing),
             repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
@@ -101,23 +90,31 @@ fun PullToKeptIndicator(
         label = "chevronBounceOffset"
     )
 
+    // Smooth text & progress opacity driven by pullFraction (no structural layout shift)
+    val textAlpha = (pullFraction / 0.25f).coerceIn(0f, 1f)
+
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp)
-            .graphicsLayer { alpha = indicatorAlpha },
+            .height(150.dp) // Fixed container height prevents layout resize jank on release
+            .padding(top = 28.dp, bottom = 12.dp)
+            .graphicsLayer {
+                alpha = indicatorAlpha
+                // Physical spring translation matching pull drag and release spring
+                translationY = -pullOffset * 0.25f
+            },
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         // Circle with icon (always visible at bottom)
         Box(
             modifier = Modifier
-                .size(56.dp)
+                .size(52.dp)
                 .clip(CircleShape)
                 .background(containerColor)
                 .graphicsLayer {
-                    scaleX = 1f + pullFraction * 0.15f
-                    scaleY = 1f + pullFraction * 0.15f
+                    scaleX = 1f + pullFraction * 0.12f
+                    scaleY = 1f + pullFraction * 0.12f
                 },
             contentAlignment = Alignment.Center
         ) {
@@ -155,49 +152,38 @@ fun PullToKeptIndicator(
             }
         }
 
-        // Text + progress — only appear during active pull
-        AnimatedVisibility(
-            visible = showPullText,
-            enter = fadeIn(
-                animationSpec = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow)
-            ) + expandVertically(
-                expandFrom = Alignment.Top,
-                animationSpec = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow)
-            ),
-            exit = fadeOut(
-                tween(durationMillis = 200)
-            )
+        // Text + progress bar (fades smoothly via graphicsLayer without layout jumps)
+        Column(
+            modifier = Modifier.graphicsLayer { alpha = textAlpha },
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Text(
-                    text = if (isReadyToRelease)
-                        "✓ Release to reveal $keptCount kept"
-                    else
-                        "Pull up to show $keptCount kept screenshot${if (keptCount > 1) "s" else ""}",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isReadyToRelease)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            val formattedKept = dev.sj010.ssjanitor.ui.screens.home.common.formatCompactCount(keptCount)
+            Text(
+                text = if (isReadyToRelease)
+                    "✓ Release to reveal $formattedKept kept"
+                else
+                    "Pull up to show $formattedKept kept screenshot${if (keptCount > 1) "s" else ""}",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = if (isReadyToRelease)
+                    MaterialTheme.colorScheme.primary
+                else
+                    MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
-                LinearProgressIndicator(
-                    progress = { pullFraction },
-                    modifier = Modifier
-                        .width(160.dp)
-                        .height(5.dp)
-                        .clip(CircleShape),
-                    color = if (isReadyToRelease)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.secondary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            }
+            LinearProgressIndicator(
+                progress = { pullFraction },
+                modifier = Modifier
+                    .width(160.dp)
+                    .height(5.dp)
+                    .clip(CircleShape),
+                color = if (isReadyToRelease)
+                    MaterialTheme.colorScheme.primary
+                else
+                    MaterialTheme.colorScheme.secondary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
         }
     }
 }
