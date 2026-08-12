@@ -4,6 +4,12 @@ object AppConstants {
     const val NOTIFICATION_CHANNEL_ID = "ssjanitor_channel"
     const val NOTIFICATION_CHANNEL_NAME = "Screenshot Detection"
     const val NOTIFICATION_CHANNEL_DESC = "Notifications for new screenshots with actions"
+
+    // High-importance channel for non-auto-archived new screenshot alerts (Heads-up peeking)
+    const val NOTIFICATION_HEADSUP_CHANNEL_ID = "ssjanitor_headsup_channel"
+    const val NOTIFICATION_HEADSUP_CHANNEL_NAME = "New Screenshot Alerts"
+    const val NOTIFICATION_HEADSUP_CHANNEL_DESC = "Heads-up banner for new screenshot actions when Auto Mode is off"
+
     const val NOTIFICATION_ID = 1001
     const val NOTIFICATION_CLEANUP_ID = 1002
     const val NOTIFICATION_SERVICE_ID = 1003
