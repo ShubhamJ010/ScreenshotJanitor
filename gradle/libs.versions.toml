@@ -11,7 +11,7 @@ kotlin = "2.2.10"
 composeBom = "2026.02.01"
 room = "2.8.4"
 work = "2.9.0"
-lifecycleViewModelCompose = "2.8.7"
+lifecycleViewModelCompose = "2.11.0"
 ksp = "2.2.10-2.0.2"
 
 [libraries]
