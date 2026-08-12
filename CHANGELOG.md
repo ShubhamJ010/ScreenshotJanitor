@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.3] - 2026-08-13
+
+### Added
+- **Drag haptic feedback** — Added 40px drag tick haptic feedback during pull-to-reveal gesture and restored `CONFIRM` threshold feedback when crossing the trigger limit.
+- **Auto Mode off heads-up notification** — Added heads-up notification when Auto Mode / Janitor background detection is toggled off.
+
 ## [1.1.2] - 2026-08-11
 
 ### Performance
