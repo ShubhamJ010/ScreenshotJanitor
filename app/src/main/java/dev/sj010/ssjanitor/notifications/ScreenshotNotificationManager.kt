@@ -32,6 +32,14 @@ class ScreenshotNotificationManager(private val context: Context) {
                 description = AppConstants.NOTIFICATION_CHANNEL_DESC
             }
             
+            val headsupChannel = NotificationChannel(
+                AppConstants.NOTIFICATION_HEADSUP_CHANNEL_ID,
+                AppConstants.NOTIFICATION_HEADSUP_CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = AppConstants.NOTIFICATION_HEADSUP_CHANNEL_DESC
+            }
+
             val serviceChannel = NotificationChannel(
                 AppConstants.NOTIFICATION_SERVICE_CHANNEL_ID,
                 AppConstants.NOTIFICATION_SERVICE_CHANNEL_NAME,
@@ -51,6 +59,7 @@ class ScreenshotNotificationManager(private val context: Context) {
             }
 
             notificationManager.createNotificationChannel(mainChannel)
+            notificationManager.createNotificationChannel(headsupChannel)
             notificationManager.createNotificationChannel(serviceChannel)
             notificationManager.createNotificationChannel(reminderChannel)
         }
@@ -130,11 +139,14 @@ class ScreenshotNotificationManager(private val context: Context) {
         val title = if (isAutoArchived) "Screenshot Auto-Archived" else "New Screenshot Detected"
         val text = if (isAutoArchived) "This screenshot will be deleted in the next cleanup. Tap to Keep." else "Choose an action for this screenshot."
 
-        val builder = NotificationCompat.Builder(context, AppConstants.NOTIFICATION_CHANNEL_ID)
+        val channelId = if (isAutoArchived) AppConstants.NOTIFICATION_CHANNEL_ID else AppConstants.NOTIFICATION_HEADSUP_CHANNEL_ID
+        val priority = if (isAutoArchived) NotificationCompat.PRIORITY_DEFAULT else NotificationCompat.PRIORITY_HIGH
+
+        val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(text)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(priority)
             .setContentIntent(contentPendingIntent)
             .setAutoCancel(true)
             .addAction(android.R.drawable.ic_menu_view, "Keep", keepPendingIntent)
@@ -142,6 +154,7 @@ class ScreenshotNotificationManager(private val context: Context) {
 
         if (!isAutoArchived) {
             builder.addAction(android.R.drawable.ic_menu_save, "Archive", archivePendingIntent)
+            builder.setDefaults(NotificationCompat.DEFAULT_ALL)
         }
 
         try {
