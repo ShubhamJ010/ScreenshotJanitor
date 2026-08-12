@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -132,15 +133,14 @@ private fun ArchiveBoxAnimation(modifier: Modifier = Modifier) {
     val containerColor = MaterialTheme.colorScheme.secondaryContainer
     val boxBackgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh
     val boxIconColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-
     val glyphStates = remember { glyphSpecs.map { GlyphState() } }
-
     val smoothTime = remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(16)
-            smoothTime.floatValue += 0.016f
+            withFrameNanos { frameTimeNanos ->
+                smoothTime.floatValue = frameTimeNanos / 1_000_000_000f
+            }
         }
     }
 

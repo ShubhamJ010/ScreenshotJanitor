@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -106,6 +107,15 @@ fun ScreenshotPreviewOverlay(
             // cut straight to the clear thumbnail.
             delay(100)
             isRendered = false
+        }
+    }
+
+    DisposableEffect(isRendered) {
+        onDispose {
+            if (!isRendered) {
+                bitmap?.recycle()
+                bitmap = null
+            }
         }
     }
 

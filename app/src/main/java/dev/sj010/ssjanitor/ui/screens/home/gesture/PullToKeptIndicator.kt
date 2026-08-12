@@ -79,13 +79,11 @@ fun PullToKeptIndicator(
     val chevronRotation = pullFraction * 180f
 
     // Idle bounce hint when at bottom and not pulling
-    val infiniteTransition = rememberInfiniteTransition(label = "chevronBounce")
-    val chevronBounce by infiniteTransition.animateFloat(
-        initialValue = 0f,
+    val chevronBounce by animateFloatAsState(
         targetValue = if (isAtEnd && pullFraction == 0f) -8f else 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 700, easing = FastOutSlowInEasing),
-            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
         ),
         label = "chevronBounceOffset"
     )
