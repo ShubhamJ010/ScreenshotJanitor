@@ -135,6 +135,7 @@ fun StatsGrid(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.fillMaxWidth(),
+                    onClick = onKeptLongClick,
                     onLongClick = onKeptLongClick
                 )
                 if (showKept && uiState.keptCount > 0) {
@@ -182,13 +183,14 @@ fun StatsCard(
     containerColor: Color,
     contentColor: Color,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier.then(
-            if (onLongClick != null) {
+            if (onClick != null || onLongClick != null) {
                 Modifier.combinedClickable(
-                    onClick = {},
+                    onClick = onClick ?: {},
                     onLongClick = onLongClick
                 )
             } else Modifier

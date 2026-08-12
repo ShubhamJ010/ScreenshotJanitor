@@ -166,9 +166,13 @@ fun HomeContent(
                             pullToReveal.dismissKept()
                         }
                     } else {
-                        pullToReveal.toggleShowKept()
+                        pullToReveal.showKept = true
                         coroutineScope.launch {
-                            listState.animateScrollToItem(listState.layoutInfo.totalItemsCount)
+                            kotlinx.coroutines.delay(60)
+                            val targetIndex = listState.layoutInfo.visibleItemsInfo
+                                .firstOrNull { it.key == "kept_header_inner" }?.index
+                                ?: (listState.layoutInfo.totalItemsCount - 1 - keptList.size).coerceAtLeast(0)
+                            listState.animateScrollToItem(targetIndex)
                         }
                     }
                 }
@@ -221,7 +225,7 @@ fun HomeContent(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = count.toString(),
+                            text = dev.sj010.ssjanitor.ui.screens.home.common.formatCompactCount(count),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer

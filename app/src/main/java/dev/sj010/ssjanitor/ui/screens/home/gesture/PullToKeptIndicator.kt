@@ -158,11 +158,12 @@ fun PullToKeptIndicator(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            val formattedKept = dev.sj010.ssjanitor.ui.screens.home.common.formatCompactCount(keptCount)
             Text(
                 text = if (isReadyToRelease)
-                    "✓ Release to reveal $keptCount kept"
+                    "✓ Release to reveal $formattedKept kept"
                 else
-                    "Pull up to show $keptCount kept screenshot${if (keptCount > 1) "s" else ""}",
+                    "Pull up to show $formattedKept kept screenshot${if (keptCount > 1) "s" else ""}",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 color = if (isReadyToRelease)
