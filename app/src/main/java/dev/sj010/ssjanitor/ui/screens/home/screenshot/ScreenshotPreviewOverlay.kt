@@ -74,13 +74,12 @@ fun ScreenshotPreviewOverlay(
     if (uriString != null) lastUri = uriString
     val uri = lastUri
 
-    var bitmap by remember(uri) { mutableStateOf<Bitmap?>(null) }
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     val context = LocalContext.current
     val density = LocalDensity.current
 
-    LaunchedEffect(uri) {
-        bitmap = null
-        if (uri != null) {
+    LaunchedEffect(uri, visible) {
+        if (visible && uri != null) {
             bitmap = loadPreviewBitmap(context, Uri.parse(uri))
         }
     }
