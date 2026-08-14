@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -73,13 +74,12 @@ fun ScreenshotPreviewOverlay(
     if (uriString != null) lastUri = uriString
     val uri = lastUri
 
-    var bitmap by remember(uri) { mutableStateOf<Bitmap?>(null) }
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     val context = LocalContext.current
     val density = LocalDensity.current
 
-    LaunchedEffect(uri) {
-        bitmap = null
-        if (uri != null) {
+    LaunchedEffect(uri, visible) {
+        if (visible && uri != null) {
             bitmap = loadPreviewBitmap(context, Uri.parse(uri))
         }
     }
@@ -106,6 +106,15 @@ fun ScreenshotPreviewOverlay(
             // cut straight to the clear thumbnail.
             delay(100)
             isRendered = false
+        }
+    }
+
+    DisposableEffect(isRendered) {
+        onDispose {
+            if (!isRendered) {
+                bitmap?.recycle()
+                bitmap = null
+            }
         }
     }
 

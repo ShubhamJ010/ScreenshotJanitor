@@ -108,7 +108,10 @@ fun HomeContent(
     // True once user has scrolled all the way to the bottom
     val isAtBottom by remember {
         derivedStateOf {
-            !listState.canScrollForward
+            val info = listState.layoutInfo
+            val lastVisible = info.visibleItemsInfo.lastOrNull()
+            lastVisible != null && lastVisible.index == info.totalItemsCount - 1 &&
+                    lastVisible.offset + lastVisible.size <= info.viewportEndOffset
         }
     }
 
@@ -241,6 +244,7 @@ fun HomeContent(
                 EmptyStateView(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .fillParentMaxHeight(0.5f)
                         .padding(vertical = 8.dp)
                 )
             }
@@ -312,7 +316,6 @@ fun HomeContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 24.dp)
-                            .animateItem()
                     )
                 }
             }

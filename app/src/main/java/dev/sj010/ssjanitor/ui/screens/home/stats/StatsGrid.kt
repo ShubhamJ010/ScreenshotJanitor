@@ -135,7 +135,6 @@ fun StatsGrid(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = onKeptLongClick,
                     onLongClick = onKeptLongClick
                 )
                 if (showKept && uiState.keptCount > 0) {
