@@ -217,7 +217,7 @@ fun ScreenshotThumbnail(
 
         // Hold-delay blur cue: fades in while the user holds, fades back out on
         // release. Sits above the artwork so the thumbnail appears to blur over.
-        if (bitmap != null) {
+        if (bitmap != null && blurAlpha.value > 0f) {
             Image(
                 bitmap = bitmap!!.asImageBitmap(),
                 contentDescription = null,

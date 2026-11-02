@@ -23,9 +23,6 @@ import kotlinx.coroutines.CoroutineScope
  * Types of haptic feedback emitted during the pull-to-reveal gesture flow.
  */
 enum class DragHapticType {
-    /** Subtle 40px step tick vibration while dragging. */
-    DragTick,
-
     /** Haptic feedback when pull crosses the threshold to trigger. */
     ThresholdActivate,
 
@@ -40,7 +37,7 @@ enum class DragHapticType {
  * Encapsulates the pull-to-reveal gesture logic for revealing "Kept" screenshots.
  *
  * Uses a rubber-band damped pull that resists harder the further you drag,
- * with Material 3 haptic drag ticks every 40px and a spring-back animation on release.
+ * with Material 3 haptic threshold feedback and a spring-back animation on release.
  */
 class NestedScrollPullToRevealState(
     private val coroutineScope: CoroutineScope,
@@ -58,8 +55,6 @@ class NestedScrollPullToRevealState(
     var isReleasing by mutableStateOf(false)
 
     private var isHapticTriggered by mutableStateOf(false)
-    private var lastTickStep = 0
-    private val tickStepDistance = 40f
 
     // True once user has scrolled all the way to the bottom of pending+achieved
     private var isAtBottomFn: (() -> Boolean)? = null
@@ -87,12 +82,6 @@ class NestedScrollPullToRevealState(
 
                 rawPullOffset = target
 
-                val currentStep = (target / tickStepDistance).toInt()
-                if (target < pullThreshold && currentStep != lastTickStep && target > 0f) {
-                    lastTickStep = currentStep
-                    performHaptic(DragHapticType.DragTick)
-                }
-
                 if (target >= pullThreshold && !isHapticTriggered) {
                     isHapticTriggered = true
                     performHaptic(DragHapticType.ThresholdActivate)
@@ -110,12 +99,6 @@ class NestedScrollPullToRevealState(
                 val consumed = available.y.coerceAtMost(rawPullOffset)
                 val target = rawPullOffset - consumed
                 rawPullOffset = target
-
-                val currentStep = (target / tickStepDistance).toInt()
-                if (target < pullThreshold && currentStep != lastTickStep && target > 0f) {
-                    lastTickStep = currentStep
-                    performHaptic(DragHapticType.DragTick)
-                }
 
                 if (target < pullThreshold && isHapticTriggered) {
                     isHapticTriggered = false
@@ -150,7 +133,6 @@ class NestedScrollPullToRevealState(
                 )
                 isReleasing = false
                 isHapticTriggered = false
-                lastTickStep = 0
             }
             return Velocity.Zero
         }
@@ -181,13 +163,6 @@ fun rememberPullToRevealState(keptListSize: () -> Int): NestedScrollPullToReveal
             coroutineScope = scope,
             performHaptic = { hapticType ->
                 when (hapticType) {
-                    DragHapticType.DragTick -> {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                            view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_TICK)
-                        } else {
-                            view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-                        }
-                    }
                     DragHapticType.ThresholdActivate -> {
                         view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                     }

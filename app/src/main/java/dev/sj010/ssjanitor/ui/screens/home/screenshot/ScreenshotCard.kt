@@ -35,6 +35,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.sj010.ssjanitor.data.db.entity.ScreenshotEntity
+import androidx.compose.ui.graphics.compositeOver
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -49,10 +50,17 @@ fun ScreenshotCard(
     onRelease: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val cardColor = when {
-        screenshot.kept -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
-        screenshot.archived -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.55f)
-        else -> MaterialTheme.colorScheme.surfaceContainer
+    val surface = MaterialTheme.colorScheme.surface
+    val primaryContainer = MaterialTheme.colorScheme.primaryContainer
+    val tertiaryContainer = MaterialTheme.colorScheme.tertiaryContainer
+    val surfaceContainer = MaterialTheme.colorScheme.surfaceContainer
+
+    val cardColor = remember(screenshot.kept, screenshot.archived, surface, primaryContainer, tertiaryContainer, surfaceContainer) {
+        when {
+            screenshot.kept -> primaryContainer.copy(alpha = 0.55f).compositeOver(surface)
+            screenshot.archived -> tertiaryContainer.copy(alpha = 0.55f).compositeOver(surface)
+            else -> surfaceContainer
+        }
     }
 
     Card(
