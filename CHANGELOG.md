@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.4] - 2026-11-02
+
+### Fixed
+- **Thumbnail preview reload** — Preview bitmap now reloads reliably on repeated hold gestures on the same thumbnail after dismissal (`LaunchedEffect` keyed on `(uri, visible)` and bitmap recycle on dispose).
+- **Kept stat card gesture** — Requires a long-press gesture on the **Kept** stat card to toggle the SHOWN state and reveal the Kept screenshots list, preventing accidental tap triggers.
+- **Haptic feedback refinement** — Removed 40px drag tick vibration during pull-to-reveal gestures to keep haptics focused on trigger activation and deactivation thresholds.
+- **UI stability & rendering** — Composited card container colors over surface with `remember`, switched archive box animation loop to `withFrameNanos`, adopted spring bounce for pull chevron indicator, and improved bottom detection precision in screenshot list.
+
 ## [1.1.3] - 2026-08-13
 
 ### Added
