@@ -1,5 +1,5 @@
 [versions]
-agp = "9.2.1"
+agp = "9.5.1"
 coreKtx = "1.10.1"
 splash = "1.0.1"
 junit = "4.13.2"
