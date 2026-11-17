@@ -32,6 +32,9 @@ interface ScreenshotDao {
     @Query("UPDATE screenshots SET deleted = 1 WHERE uri IN (:uris)")
     suspend fun markAsDeleted(uris: List<String>)
 
+    @Query("UPDATE screenshots SET kept = 1, archived = 0 WHERE uri IN (:uris)")
+    suspend fun markAsKept(uris: List<String>)
+
     // Used by the janitor: only archived screenshots that haven't been kept or already deleted
     @Query("SELECT * FROM screenshots WHERE archived = 1 AND kept = 0 AND deleted = 0")
     suspend fun getArchivedForCleanup(): List<ScreenshotEntity>

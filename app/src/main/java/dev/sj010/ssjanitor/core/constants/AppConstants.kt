@@ -39,6 +39,9 @@ object AppConstants {
     // Minutes before the scheduled cleanup that the heads-up reminder fires
     const val PRE_CLEANUP_REMINDER_MINUTES = 30
 
+    // Retention threshold for pending screenshots (auto-marked kept after 28 days)
+    const val PENDING_AUTO_KEEP_DAYS = 28
+
     // Unique work names
     const val WORK_CLEANUP_NAME = "ScreenshotCleanupWork"
     const val WORK_REMINDER_NAME = "ScreenshotCleanupReminderWork"

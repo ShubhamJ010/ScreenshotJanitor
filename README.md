@@ -18,7 +18,7 @@
 
 ---
 
-ssJanitor monitors newly created screenshots, lets you archive or delete them through lightweight notifications, and automatically cleans up unarchived screenshots on a schedule. Intentionally lightweight, battery-friendly, and aligned with modern Android storage and background execution policies.
+ssJanitor monitors newly created screenshots, lets you archive or delete them through lightweight notifications, and automatically cleans up archived screenshots on a schedule. Unreviewed pending screenshots older than 28 days are automatically preserved as Kept to avoid data loss. Intentionally lightweight, battery-friendly, and aligned with modern Android storage and background execution policies.
 
 ## Install
 
@@ -50,6 +50,7 @@ ssJanitor monitors newly created screenshots, lets you archive or delete them th
 - **Auto-Archive Mode** — Long-press the Archived card to auto-archive every new screenshot by default.
 - **Battery Optimization Opt-Out** — Dedicated card with one-tap "Battery Usage" button to disable battery optimization.
 - **Automatic Cleanup** — WorkManager-based daily cleanup removes archived screenshots.
+- **Safe Retention** — Pending screenshots older than 28 days are automatically preserved in the Kept collection to prevent data loss.
 
 [Detailed feature docs →](docs/features.md)
 

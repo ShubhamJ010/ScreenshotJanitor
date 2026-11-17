@@ -29,7 +29,7 @@ Powered by WorkManager for battery-efficient background execution.
 3. For each match, it attempts to delete the file from MediaStore.
 4. On success, the database row is marked `deleted = true`.
 5. Failed deletions are retried on the next scheduled run.
-6. Old unarchived screenshots beyond a retention period trigger a cleanup recommendation notification.
+6. Unreviewed pending screenshots older than 28 days are automatically preserved as Kept to prevent data loss and keep the pending list clean.
 
 ## Pre-Cleanup Heads-Up Reminder
 

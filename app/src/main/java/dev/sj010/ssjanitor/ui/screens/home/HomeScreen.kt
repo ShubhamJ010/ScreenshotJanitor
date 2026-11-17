@@ -45,7 +45,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import dev.sj010.ssjanitor.ui.screens.home.screenshot.ScreenshotPreviewOverlay
 import dev.sj010.ssjanitor.SsJanitorApp
-import dev.sj010.ssjanitor.viewmodel.HomeEvent
 import dev.sj010.ssjanitor.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
 
@@ -116,7 +115,9 @@ fun HomeScreen(
         })
     }
 
-    // ── Permission launcher ──────────────────────────────────────────────────
+    // ── Permission launcher ───────────────────────────────────────────
+    val pendingPermission by viewModel.pendingPermission.collectAsState()
+
     val intentSenderLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
@@ -127,16 +128,12 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(viewModel.events) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is HomeEvent.RequestDeletePermission -> {
-                    intentSenderLauncher.launch(
-                        IntentSenderRequest.Builder(event.intentSender).build()
-                    )
-                }
-            }
-        }
+    LaunchedEffect(pendingPermission) {
+        val intentSender = pendingPermission ?: return@LaunchedEffect
+        intentSenderLauncher.launch(
+            IntentSenderRequest.Builder(intentSender).build()
+        )
+        viewModel.clearPendingPermission()
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(

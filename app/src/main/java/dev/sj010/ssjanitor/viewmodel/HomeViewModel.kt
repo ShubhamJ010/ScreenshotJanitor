@@ -1,6 +1,7 @@
 package dev.sj010.ssjanitor.viewmodel
 
 import android.content.Context
+import android.content.IntentSender
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -9,6 +10,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.WorkManager
 import dev.sj010.ssjanitor.core.constants.AppConstants
 import dev.sj010.ssjanitor.data.db.entity.ScreenshotEntity
+import dev.sj010.ssjanitor.data.repository.DeleteResult
 import dev.sj010.ssjanitor.data.repository.ScreenshotRepository
 import dev.sj010.ssjanitor.data.repository.SettingsRepository
 import dev.sj010.ssjanitor.worker.CleanupScheduler
@@ -19,7 +21,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 data class HomeUiState(
@@ -134,17 +135,28 @@ class HomeViewModel(
         }
     }
 
-    private val _events = kotlinx.coroutines.flow.MutableSharedFlow<HomeEvent>()
-    val events: kotlinx.coroutines.flow.SharedFlow<HomeEvent> = _events.asSharedFlow()
+    // Pending delete-permission prompt held as state (not a SharedFlow event):
+    // survives cold starts from notification actions, where the UI is not yet
+    // collecting and an event would be dropped before any collector attaches.
+    private val _pendingPermission = MutableStateFlow<IntentSender?>(null)
+    val pendingPermission: StateFlow<IntentSender?> = _pendingPermission.asStateFlow()
 
     private var pendingUrisToDelete: List<String> = emptyList()
 
     fun deleteScreenshot(context: Context, uri: String) {
         viewModelScope.launch {
             pendingUrisToDelete = listOf(uri)
-            val result = repository.deleteScreenshots(context, pendingUrisToDelete)
-                if (result is dev.sj010.ssjanitor.data.repository.DeleteResult.RequiresPermission) {
-                _events.emit(HomeEvent.RequestDeletePermission(result.intentSender))
+            when (val result = repository.deleteScreenshots(context, pendingUrisToDelete)) {
+                is DeleteResult.RequiresPermission -> {
+                    _pendingPermission.value = result.intentSender
+                }
+                is DeleteResult.Success -> {
+                    repository.markAsDeleted(pendingUrisToDelete)
+                    pendingUrisToDelete = emptyList()
+                }
+                else -> {
+                    pendingUrisToDelete = emptyList()
+                }
             }
         }
     }
@@ -155,15 +167,24 @@ class HomeViewModel(
             val archivedScreenshots = repository.getArchivedForCleanup()
             if (archivedScreenshots.isNotEmpty()) {
                 pendingUrisToDelete = archivedScreenshots.map { it.uri }
-                val result = repository.deleteScreenshots(context, pendingUrisToDelete)
-            if (result is dev.sj010.ssjanitor.data.repository.DeleteResult.RequiresPermission) {
-                    _events.emit(HomeEvent.RequestDeletePermission(result.intentSender))
+                when (val result = repository.deleteScreenshots(context, pendingUrisToDelete)) {
+                    is DeleteResult.RequiresPermission -> {
+                        _pendingPermission.value = result.intentSender
+                    }
+                    is DeleteResult.Success -> {
+                        repository.markAsDeleted(pendingUrisToDelete)
+                        pendingUrisToDelete = emptyList()
+                    }
+                    else -> {
+                        pendingUrisToDelete = emptyList()
+                    }
                 }
             }
         }
     }
 
     fun onDeletePermissionGranted() {
+        _pendingPermission.value = null
         viewModelScope.launch {
             repository.markAsDeleted(pendingUrisToDelete)
             pendingUrisToDelete = emptyList()
@@ -172,6 +193,11 @@ class HomeViewModel(
 
     fun onDeletePermissionDenied() {
         pendingUrisToDelete = emptyList()
+        _pendingPermission.value = null
+    }
+
+    fun clearPendingPermission() {
+        _pendingPermission.value = null
     }
 
     fun rescheduleCleanup(hour: Int, minute: Int, context: Context) {
@@ -190,10 +216,6 @@ class HomeViewModel(
         )
         settingsRepository.setCleanupTime(hour, minute)
     }
-}
-
-sealed class HomeEvent {
-    class RequestDeletePermission(val intentSender: android.content.IntentSender) : HomeEvent()
 }
 
 class HomeViewModelFactory(
