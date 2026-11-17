@@ -58,6 +58,7 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val nextCleanupTime by viewModel.nextCleanupTimeMillis.collectAsState()
     val isJanitorEnabled by viewModel.isJanitorEnabled.collectAsState()
+    val customFolderPath by viewModel.customFolderPath.collectAsState()
 
     var hasNotificationPermission by remember {
         mutableStateOf(
@@ -234,6 +235,8 @@ fun HomeScreen(
             hasStoragePermission = hasStoragePermission,
             isAllFilesManager = isAllFilesManager,
             isBatteryOptDisabled = isBatteryOptDisabled,
+            customFolderPath = customFolderPath,
+            onSelectCustomFolder = { viewModel.setCustomFolder(it) },
             onRequestPermissions = {
                 val list = mutableListOf<String>()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission) {

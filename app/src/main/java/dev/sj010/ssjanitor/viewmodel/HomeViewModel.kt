@@ -46,6 +46,14 @@ class HomeViewModel(
     private val _isJanitorEnabled = MutableStateFlow(settingsRepository.isJanitorEnabled())
     val isJanitorEnabled = _isJanitorEnabled.asStateFlow()
 
+    private val _customFolderPath = MutableStateFlow(settingsRepository.getCustomFolderPath())
+    val customFolderPath = _customFolderPath.asStateFlow()
+
+    fun setCustomFolder(path: String?) {
+        settingsRepository.setCustomFolderPath(path)
+        _customFolderPath.value = path
+    }
+
     init {
         // Run reconciliation when ViewModel is created (app start)
         // We use a separate context/scope if needed, but viewModelScope is fine.

@@ -30,6 +30,8 @@ fun PermissionWarningSection(
     hasStoragePermission: Boolean,
     isAllFilesManager: Boolean,
     isBatteryOptDisabled: Boolean,
+    customFolderPath: String? = null,
+    onSelectCustomFolder: (String?) -> Unit = {},
     onRequestPermissions: () -> Unit,
     onRequestAllFilesAccess: () -> Unit,
     onRequestDisableBatteryOpt: () -> Unit,
@@ -39,12 +41,14 @@ fun PermissionWarningSection(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // ── Permission warning card ──────────────────────────────────────
-        if (!hasNotificationPermission || !hasStoragePermission || !isAllFilesManager) {
+        // ── Permission warning / Watched folder card ─────────────────────────
+        if (!hasNotificationPermission || !hasStoragePermission || !isAllFilesManager || customFolderPath != null) {
             PermissionWarningCard(
                 hasNotificationPermission = hasNotificationPermission,
                 hasStoragePermission = hasStoragePermission,
                 isAllFilesManager = isAllFilesManager,
+                customFolderPath = customFolderPath,
+                onSelectCustomFolder = onSelectCustomFolder,
                 onRequestPermissions = onRequestPermissions,
                 onRequestAllFilesAccess = onRequestAllFilesAccess
             )

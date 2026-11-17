@@ -37,4 +37,18 @@ class SettingsRepository(context: Context) {
             putInt(AppConstants.PREF_CLEANUP_MINUTE, minute)
         }
     }
+
+    fun getCustomFolderPath(): String? {
+        return prefs.getString(AppConstants.PREF_CUSTOM_FOLDER_PATH, null)
+    }
+
+    fun setCustomFolderPath(path: String?) {
+        prefs.edit {
+            if (path != null) {
+                putString(AppConstants.PREF_CUSTOM_FOLDER_PATH, path)
+            } else {
+                remove(AppConstants.PREF_CUSTOM_FOLDER_PATH)
+            }
+        }
+    }
 }

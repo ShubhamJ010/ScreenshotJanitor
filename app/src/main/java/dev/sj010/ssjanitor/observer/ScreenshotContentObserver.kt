@@ -188,8 +188,7 @@ class ScreenshotContentObserver(
                         return false
                     }
 
-                    val isScreenshot = displayName.contains("screenshot", ignoreCase = true) ||
-                            relativePath.contains("screenshots", ignoreCase = true)
+                    val isScreenshot = isScreenshotMatch(displayName, relativePath)
 
                     if (isScreenshot) {
                         val contentUri = ContentUris.withAppendedId(
@@ -263,8 +262,7 @@ class ScreenshotContentObserver(
                     }
                     if (isPending || displayName.isBlank() || relativePath.isBlank()) continue
 
-                    val isScreenshot = displayName.contains("screenshot", ignoreCase = true) ||
-                            relativePath.contains("screenshots", ignoreCase = true)
+                    val isScreenshot = isScreenshotMatch(displayName, relativePath)
                     if (!isScreenshot) continue
 
                     val contentUri = ContentUris.withAppendedId(
@@ -284,6 +282,16 @@ class ScreenshotContentObserver(
             }
         } catch (e: Exception) {
             Log.e(TAG, "scanLatestScreenshots failed", e)
+        }
+    }
+
+    private fun isScreenshotMatch(displayName: String, relativePath: String): Boolean {
+        val customFolder = settingsRepository.getCustomFolderPath()
+        return if (!customFolder.isNullOrBlank()) {
+            relativePath.contains(customFolder, ignoreCase = true)
+        } else {
+            displayName.contains("screenshot", ignoreCase = true) ||
+                    relativePath.contains("screenshots", ignoreCase = true)
         }
     }
 
