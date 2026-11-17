@@ -9,6 +9,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.WorkManager
 import dev.sj010.ssjanitor.core.constants.AppConstants
 import dev.sj010.ssjanitor.data.db.entity.ScreenshotEntity
+import dev.sj010.ssjanitor.data.repository.ScreenshotActionMode
 import dev.sj010.ssjanitor.data.repository.ScreenshotRepository
 import dev.sj010.ssjanitor.data.repository.SettingsRepository
 import dev.sj010.ssjanitor.worker.CleanupScheduler
@@ -44,6 +45,14 @@ class HomeViewModel(
 
     private val _isJanitorEnabled = MutableStateFlow(settingsRepository.isJanitorEnabled())
     val isJanitorEnabled = _isJanitorEnabled.asStateFlow()
+
+    private val _screenshotActionMode =
+        MutableStateFlow(settingsRepository.getScreenshotActionMode())
+    val screenshotActionMode = _screenshotActionMode.asStateFlow()
+
+    private val _dialogDelaySeconds =
+        MutableStateFlow(settingsRepository.getDialogDelaySeconds())
+    val dialogDelaySeconds = _dialogDelaySeconds.asStateFlow()
 
     init {
         // Run reconciliation when ViewModel is created (app start)
@@ -102,6 +111,20 @@ class HomeViewModel(
         settingsRepository.setJanitorEnabled(newValue)
         _isJanitorEnabled.value = newValue
     }
+
+    fun setScreenshotActionMode(mode: ScreenshotActionMode) {
+        settingsRepository.setScreenshotActionMode(mode)
+        _screenshotActionMode.value = mode
+    }
+
+    fun setDialogDelaySeconds(seconds: Int) {
+        settingsRepository.setDialogDelaySeconds(seconds)
+        _dialogDelaySeconds.value = settingsRepository.getDialogDelaySeconds()
+    }
+
+    fun getCleanupHour(): Int = settingsRepository.getCleanupHour()
+
+    fun getCleanupMinute(): Int = settingsRepository.getCleanupMinute()
 
     val nextCleanupTimeMillis: StateFlow<Long?> = workManager.getWorkInfosForUniqueWorkFlow(AppConstants.WORK_CLEANUP_NAME)
         .map { workInfos ->

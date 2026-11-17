@@ -29,12 +29,22 @@ object AppConstants {
     const val ACTION_CLEANUP_OLD = "dev.sj010.ssjanitor.ACTION_CLEANUP_OLD"
 
     const val EXTRA_SCREENSHOT_URI = "extra_screenshot_uri"
+    const val EXTRA_SCREENSHOT_CREATED_AT = "extra_screenshot_created_at"
 
     const val PREF_NAME = "ssjanitor_prefs"
     const val PREF_AUTO_ARCHIVE = "pref_auto_archive"
     const val PREF_CLEANUP_HOUR = "pref_cleanup_hour"
     const val PREF_CLEANUP_MINUTE = "pref_cleanup_minute"
     const val PREF_JANITOR_ENABLED = "pref_janitor_enabled"
+    const val PREF_SCREENSHOT_ACTION_MODE = "pref_screenshot_action_mode"
+    const val PREF_DIALOG_DELAY_SECONDS = "pref_dialog_delay_seconds"
+
+    // Screenshot action dialog
+    const val DEFAULT_DIALOG_DELAY_SECONDS = 2
+    const val MIN_DIALOG_DELAY_SECONDS = 0
+    const val MAX_DIALOG_DELAY_SECONDS = 10
+    const val MIN_CUSTOM_DELETE_MINUTES = 1L
+    const val MAX_CUSTOM_DELETE_MINUTES = 30L * 24L * 60L
 
     // Minutes before the scheduled cleanup that the heads-up reminder fires
     const val PRE_CLEANUP_REMINDER_MINUTES = 30
@@ -42,6 +52,7 @@ object AppConstants {
     // Unique work names
     const val WORK_CLEANUP_NAME = "ScreenshotCleanupWork"
     const val WORK_REMINDER_NAME = "ScreenshotCleanupReminderWork"
+    const val WORK_SCHEDULED_DELETION_PREFIX = "ScreenshotScheduledDeletion_"
 
     // Default scheduled cleanup time (local timezone): 11:30 PM
     const val DEFAULT_CLEANUP_HOUR = 23
