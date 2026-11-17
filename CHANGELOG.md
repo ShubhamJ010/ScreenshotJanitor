@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.5] - 2026-11-18
+
+### Added
+- **Screenshot Folder override** — Option in the home screen setup/permission card to select and watch a custom screenshot folder via Android Storage Access Framework instead of the system default directory (#33).
+
+### Fixed
+- **Notification "Delete Now" on cold start** — Retain delete confirmation intent requests via StateFlow so tapping "Delete Now" from a notification reliably triggers system delete on cold starts (#44).
+- **Auto-keep stale pending screenshots** — Automatically retain pending screenshots older than 28 days as "Kept" during daily cleanup to keep the pending list organized safely (#43).
+
 ## [1.1.4] - 2026-11-02
 
 ### Fixed
