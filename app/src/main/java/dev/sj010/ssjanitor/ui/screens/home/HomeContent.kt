@@ -63,6 +63,8 @@ fun HomeContent(
     hasStoragePermission: Boolean,
     isAllFilesManager: Boolean,
     isBatteryOptDisabled: Boolean,
+    customFolderPath: String? = null,
+    onSelectCustomFolder: (String?) -> Unit = {},
     onRequestPermissions: () -> Unit,
     onRequestAllFilesAccess: () -> Unit,
     onRequestDisableBatteryOpt: () -> Unit,
@@ -134,13 +136,15 @@ fun HomeContent(
     ) {
 
         // ── Permission warnings ─────────────────────────────────────────────
-        if (!hasNotificationPermission || !hasStoragePermission || !isAllFilesManager || !isBatteryOptDisabled) {
+        if (!hasNotificationPermission || !hasStoragePermission || !isAllFilesManager || !isBatteryOptDisabled || customFolderPath != null) {
             item(key = "permission_section") {
                 PermissionWarningSection(
                     hasNotificationPermission = hasNotificationPermission,
                     hasStoragePermission = hasStoragePermission,
                     isAllFilesManager = isAllFilesManager,
                     isBatteryOptDisabled = isBatteryOptDisabled,
+                    customFolderPath = customFolderPath,
+                    onSelectCustomFolder = onSelectCustomFolder,
                     onRequestPermissions = onRequestPermissions,
                     onRequestAllFilesAccess = onRequestAllFilesAccess,
                     onRequestDisableBatteryOpt = onRequestDisableBatteryOpt,

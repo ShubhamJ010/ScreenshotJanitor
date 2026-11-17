@@ -96,6 +96,6 @@ A scheduled WorkManager worker removes archived screenshots from device storage.
 - Deletes from `MediaStore` (Scoped Storage compliant).
 - Updates database state on completion.
 - Includes retry handling for failed deletions.
-- Also identifies unarchived screenshots beyond retention period for cleanup recommendations.
+- Automatically preserves unarchived screenshots older than 28 days as Kept to prevent data loss.
 
 **Implementation:** `worker/ScreenshotCleanupWorker.kt`

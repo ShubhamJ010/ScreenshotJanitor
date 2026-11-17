@@ -45,7 +45,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import dev.sj010.ssjanitor.ui.screens.home.screenshot.ScreenshotPreviewOverlay
 import dev.sj010.ssjanitor.SsJanitorApp
-import dev.sj010.ssjanitor.viewmodel.HomeEvent
 import dev.sj010.ssjanitor.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
 
@@ -59,6 +58,7 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val nextCleanupTime by viewModel.nextCleanupTimeMillis.collectAsState()
     val isJanitorEnabled by viewModel.isJanitorEnabled.collectAsState()
+    val customFolderPath by viewModel.customFolderPath.collectAsState()
 
     var hasNotificationPermission by remember {
         mutableStateOf(
@@ -116,7 +116,9 @@ fun HomeScreen(
         })
     }
 
-    // ── Permission launcher ──────────────────────────────────────────────────
+    // ── Permission launcher ───────────────────────────────────────────
+    val pendingPermission by viewModel.pendingPermission.collectAsState()
+
     val intentSenderLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
@@ -127,16 +129,12 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(viewModel.events) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is HomeEvent.RequestDeletePermission -> {
-                    intentSenderLauncher.launch(
-                        IntentSenderRequest.Builder(event.intentSender).build()
-                    )
-                }
-            }
-        }
+    LaunchedEffect(pendingPermission) {
+        val intentSender = pendingPermission ?: return@LaunchedEffect
+        intentSenderLauncher.launch(
+            IntentSenderRequest.Builder(intentSender).build()
+        )
+        viewModel.clearPendingPermission()
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -237,6 +235,8 @@ fun HomeScreen(
             hasStoragePermission = hasStoragePermission,
             isAllFilesManager = isAllFilesManager,
             isBatteryOptDisabled = isBatteryOptDisabled,
+            customFolderPath = customFolderPath,
+            onSelectCustomFolder = { viewModel.setCustomFolder(it) },
             onRequestPermissions = {
                 val list = mutableListOf<String>()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission) {
