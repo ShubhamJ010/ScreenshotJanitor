@@ -32,8 +32,12 @@ class SsJanitorApp : Application() {
     }
 
     fun startDetectionService() {
-        val intent = Intent(this, ScreenshotDetectionService::class.java)
-        startForegroundService(intent)
+        try {
+            val intent = Intent(this, ScreenshotDetectionService::class.java)
+            startForegroundService(intent)
+        } catch (e: Exception) {
+            android.util.Log.e("SsJanitorApp", "Failed to start detection service", e)
+        }
     }
 
     fun stopDetectionService() {

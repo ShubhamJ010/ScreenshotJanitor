@@ -170,6 +170,16 @@ class ScreenshotRepository(private val screenshotDao: ScreenshotDao) {
             screenshotDao.getArchivedForCleanup(now)
         }
 
+    /** Preserves old pending screenshots (> threshold) as kept so they are not lost. */
+    suspend fun autoKeepOldPending(threshold: Long): Int = withContext(Dispatchers.IO) {
+        val oldPending = screenshotDao.getOldPendingScreenshots(threshold)
+        if (oldPending.isNotEmpty()) {
+            Log.d(TAG, "Auto-keeping ${oldPending.size} pending screenshots older than threshold")
+            screenshotDao.markAsKept(oldPending.map { it.uri })
+        }
+        oldPending.size
+    }
+
     /**
      * Reconciles the database with the actual device storage.
      * Identifies screenshots that have been deleted, trashed, or are no longer accessible

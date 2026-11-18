@@ -45,9 +45,13 @@ object AppConstants {
     const val MAX_DIALOG_DELAY_SECONDS = 10
     const val MIN_CUSTOM_DELETE_MINUTES = 1L
     const val MAX_CUSTOM_DELETE_MINUTES = 30L * 24L * 60L
+    const val PREF_CUSTOM_FOLDER_PATH = "pref_custom_folder_path"
 
     // Minutes before the scheduled cleanup that the heads-up reminder fires
     const val PRE_CLEANUP_REMINDER_MINUTES = 30
+
+    // Retention threshold for pending screenshots (auto-marked kept after 28 days)
+    const val PENDING_AUTO_KEEP_DAYS = 28
 
     // Unique work names
     const val WORK_CLEANUP_NAME = "ScreenshotCleanupWork"

@@ -45,7 +45,9 @@ class MainActivity : ComponentActivity() {
         }
 
         enableEdgeToEdge()
-        handleIntent(intent)
+        if (savedInstanceState == null) {
+            handleIntent(intent)
+        }
         setContent {
             SsJanitorTheme {
                 Surface(
@@ -73,11 +75,13 @@ class MainActivity : ComponentActivity() {
                     val notificationManager = ScreenshotNotificationManager(this)
                     notificationManager.dismissNotification()
                 }
+                intent.action = null
             }
             AppConstants.ACTION_CLEANUP_OLD -> {
                 viewModel.runCleanupNow(this)
                 val notificationManager = ScreenshotNotificationManager(this)
                 notificationManager.dismissCleanupNotification()
+                intent.action = null
             }
         }
     }

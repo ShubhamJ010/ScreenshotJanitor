@@ -28,3 +28,6 @@ keystore.properties
 # Profiling traces
 *.perfetto-trace
 
+# Kotlin incremental build cache
+.kotlin/
+
