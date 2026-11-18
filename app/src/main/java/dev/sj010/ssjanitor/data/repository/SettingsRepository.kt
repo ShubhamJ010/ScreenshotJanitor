@@ -4,6 +4,11 @@ import android.content.Context
 import androidx.core.content.edit
 import dev.sj010.ssjanitor.core.constants.AppConstants
 
+enum class ScreenshotActionMode {
+    NOTIFICATION,
+    DIALOG
+}
+
 class SettingsRepository(context: Context) {
     private val prefs = context.getSharedPreferences(AppConstants.PREF_NAME, Context.MODE_PRIVATE)
 
@@ -35,6 +40,38 @@ class SettingsRepository(context: Context) {
         prefs.edit {
             putInt(AppConstants.PREF_CLEANUP_HOUR, hour)
             putInt(AppConstants.PREF_CLEANUP_MINUTE, minute)
+        }
+    }
+
+    fun getScreenshotActionMode(): ScreenshotActionMode {
+        val stored = prefs.getString(
+            AppConstants.PREF_SCREENSHOT_ACTION_MODE,
+            ScreenshotActionMode.NOTIFICATION.name
+        )
+        return runCatching { ScreenshotActionMode.valueOf(stored ?: "") }
+            .getOrDefault(ScreenshotActionMode.NOTIFICATION)
+    }
+
+    fun setScreenshotActionMode(mode: ScreenshotActionMode) {
+        prefs.edit { putString(AppConstants.PREF_SCREENSHOT_ACTION_MODE, mode.name) }
+    }
+
+    fun getDialogDelaySeconds(): Int {
+        return prefs.getInt(
+            AppConstants.PREF_DIALOG_DELAY_SECONDS,
+            AppConstants.DEFAULT_DIALOG_DELAY_SECONDS
+        ).coerceIn(AppConstants.MIN_DIALOG_DELAY_SECONDS, AppConstants.MAX_DIALOG_DELAY_SECONDS)
+    }
+
+    fun setDialogDelaySeconds(seconds: Int) {
+        prefs.edit {
+            putInt(
+                AppConstants.PREF_DIALOG_DELAY_SECONDS,
+                seconds.coerceIn(
+                    AppConstants.MIN_DIALOG_DELAY_SECONDS,
+                    AppConstants.MAX_DIALOG_DELAY_SECONDS
+                )
+            )
         }
     }
 

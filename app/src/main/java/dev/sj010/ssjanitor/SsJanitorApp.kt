@@ -9,8 +9,13 @@ import dev.sj010.ssjanitor.data.repository.SettingsRepository
 import dev.sj010.ssjanitor.observer.ScreenshotContentObserver
 import dev.sj010.ssjanitor.service.ScreenshotDetectionService
 import dev.sj010.ssjanitor.worker.CleanupScheduler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 class SsJanitorApp : Application() {
+
+    val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     val database: AppDatabase by lazy { AppDatabase.getDatabase(this) }
     val repository: ScreenshotRepository by lazy { ScreenshotRepository(database.screenshotDao()) }

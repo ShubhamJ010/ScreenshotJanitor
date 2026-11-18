@@ -35,9 +35,10 @@ interface ScreenshotDao {
     @Query("UPDATE screenshots SET kept = 1, archived = 0 WHERE uri IN (:uris)")
     suspend fun markAsKept(uris: List<String>)
 
-    // Used by the janitor: only archived screenshots that haven't been kept or already deleted
-    @Query("SELECT * FROM screenshots WHERE archived = 1 AND kept = 0 AND deleted = 0")
-    suspend fun getArchivedForCleanup(): List<ScreenshotEntity>
+    // Used by the janitor: only archived screenshots that haven't been kept or already deleted,
+    // and whose per-screenshot timer (if any) is due.
+    @Query("SELECT * FROM screenshots WHERE archived = 1 AND kept = 0 AND deleted = 0 AND (deleteAfter IS NULL OR deleteAfter <= :now)")
+    suspend fun getArchivedForCleanup(now: Long): List<ScreenshotEntity>
 
     // Legacy fallback — old unarchived screenshots beyond a time threshold (not kept, not deleted)
     @Query("SELECT * FROM screenshots WHERE archived = 0 AND kept = 0 AND deleted = 0 AND createdAt < :threshold")

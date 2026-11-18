@@ -7,12 +7,15 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.provider.Settings
 import android.util.Log
 import dev.sj010.ssjanitor.data.db.AppDatabase
 import dev.sj010.ssjanitor.data.db.entity.ScreenshotEntity
+import dev.sj010.ssjanitor.data.repository.ScreenshotActionMode
 import dev.sj010.ssjanitor.data.repository.ScreenshotRepository
 import dev.sj010.ssjanitor.data.repository.SettingsRepository
 import dev.sj010.ssjanitor.notifications.ScreenshotNotificationManager
+import dev.sj010.ssjanitor.service.ScreenshotActionOverlayService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -321,16 +324,29 @@ class ScreenshotContentObserver(
         }
 
         val isAutoArchive = settingsRepository.isAutoArchiveEnabled()
+        val useActionDialog = settingsRepository.getScreenshotActionMode() ==
+                ScreenshotActionMode.DIALOG && Settings.canDrawOverlays(context)
+
         val entity = ScreenshotEntity(
             uri = uriString,
             fileName = fileName,
             createdAt = createdAt,
             fileSize = fileSize,
-            archived = isAutoArchive,
+            archived = if (useActionDialog) false else isAutoArchive,
             deleted = false
         )
         repository.insertScreenshot(entity)
-        notificationManager.showScreenshotNotification(uriString, isAutoArchive)
+
+        if (useActionDialog) {
+            runCatching {
+                ScreenshotActionOverlayService.start(context, uriString, createdAt)
+            }.onFailure {
+                Log.e(TAG, "Unable to start screenshot action dialog, falling back to notification", it)
+                notificationManager.showScreenshotNotification(uriString, false)
+            }
+        } else {
+            notificationManager.showScreenshotNotification(uriString, isAutoArchive)
+        }
     }
 
     // ---------------------------------------------------------------------
